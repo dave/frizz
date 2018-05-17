@@ -19,8 +19,9 @@ type App struct {
 	Watcher    flux.WatcherInterface
 	Notifier   flux.NotifierInterface
 
-	Empty *EmptyStore
-	Page  *PageStore
+	Empty    *EmptyStore
+	Page     *PageStore
+	Injector *InjectorStore
 }
 
 func (a *App) Init() {
@@ -31,6 +32,7 @@ func (a *App) Init() {
 
 	a.Empty = NewEmptyStore(a)
 	a.Page = NewPageStore(a)
+	a.Injector = NewInjectorStore(a)
 
 	a.Dispatcher = flux.NewDispatcher(
 		// Notifier:
@@ -38,6 +40,7 @@ func (a *App) Init() {
 		// Stores:
 		a.Empty,
 		a.Page,
+		a.Injector,
 	)
 }
 

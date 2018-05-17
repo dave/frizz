@@ -74,12 +74,8 @@ const Styles = `
 		justify-content: center;
 	}
 	.split {
-		-webkit-box-sizing: border-box;
-		-moz-box-sizing: border-box;
-		box-sizing: border-box;
 		height: 100%;
 		width: 100%;
-		float: left;
 	}
 	.gutter {
 		height: 100%;
@@ -95,6 +91,14 @@ const Styles = `
 	.gutter.gutter-vertical {
 		cursor: row-resize;
 		background-image:  url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=')
+	}
+	.split {
+		-webkit-box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		box-sizing: border-box;
+	}
+	.split, .gutter.gutter-horizontal {
+		float: left;
 	}
 	.octicon {
 		display: inline-block;
@@ -121,6 +125,7 @@ func (v *Page) renderTree() *vecty.HTML {
 	v.tree = NewTree(v.app)
 
 	var emptyDisplay, loadingDisplay, emptyMessageDisplay string
+	emptyDisplay = "none"
 
 	return elem.Div(
 		vecty.Markup(

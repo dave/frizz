@@ -1,7 +1,7 @@
 package views
 
 import (
-	"github.com/dave/play/stores"
+	"github.com/dave/frizz/ed/stores"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
 	"github.com/gopherjs/vecty/prop"
