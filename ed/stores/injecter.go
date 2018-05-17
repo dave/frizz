@@ -16,9 +16,9 @@ import (
 	"github.com/gopherjs/gopherjs/js"
 )
 
-func NewInjectorStore(app *App) *InjectorStore {
+func NewInjectorStore(a *App) *InjectorStore {
 	s := &InjectorStore{
-		app: app,
+		app: a,
 	}
 	return s
 }

@@ -29,6 +29,7 @@ func main() {
 	if config.DEV {
 		svr = &http.Server{Addr: ":" + fmt.Sprint(config.DevServerPort), Handler: hdl}
 	} else {
+		// In GKE we default to port 8080 and use the value of the "PORT" environment variable if set.
 		port := "8080"
 		if fromEnv := os.Getenv("PORT"); fromEnv != "" {
 			port = fromEnv

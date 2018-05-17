@@ -2,7 +2,9 @@ package main
 
 import (
 	"github.com/dave/frizz/ed/actions"
+	"github.com/dave/frizz/ed/models"
 	"github.com/dave/frizz/ed/stores"
+	_ "github.com/dave/frizz/ed/stores/ext"
 	"github.com/dave/frizz/ed/views"
 	"github.com/gopherjs/vecty"
 	"github.com/vincent-petithory/dataurl"
@@ -27,6 +29,10 @@ func run() {
 
 	app := &stores.App{}
 	app.Init()
+
+	// ext
+	app.RegisterExternalStore(models.Id{"github.com/dave/frizz/ed/stores/ext", "Store"}, app)
+
 	p := views.NewPage(app)
 	vecty.RenderBody(p)
 

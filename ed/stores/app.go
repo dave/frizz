@@ -10,7 +10,10 @@ import (
 
 	"time"
 
+	"sync"
+
 	"github.com/dave/flux"
+	"github.com/dave/frizz/ed/models"
 	"github.com/gopherjs/gopherjs/js"
 )
 
@@ -22,6 +25,9 @@ type App struct {
 	Empty    *EmptyStore
 	Page     *PageStore
 	Injector *InjectorStore
+
+	externalM sync.RWMutex
+	external  map[models.Id]flux.StoreInterface
 }
 
 func (a *App) Init() {
@@ -29,6 +35,7 @@ func (a *App) Init() {
 	n := flux.NewNotifier()
 	a.Notifier = n
 	a.Watcher = n
+	a.external = map[models.Id]flux.StoreInterface{}
 
 	a.Empty = NewEmptyStore(a)
 	a.Page = NewPageStore(a)
@@ -111,4 +118,37 @@ func requestAnimationFrame() {
 	c := make(chan struct{})
 	js.Global.Call("requestAnimationFrame", func() { close(c) })
 	<-c
+}
+
+func (a *App) RegisterExternalStore(id models.Id, app *App) {
+	f := GetExternalStoreFunc(id)
+	if f == nil {
+		return
+	}
+	a.externalM.Lock()
+	defer a.externalM.Unlock()
+	a.external[id] = f(app)
+}
+
+func (a *App) ExternalStore(id models.Id) flux.StoreInterface {
+	a.externalM.Lock()
+	defer a.externalM.Unlock()
+	return a.external[id]
+}
+
+var externalStoreFuncsM sync.RWMutex
+var externalStoreFuncs = map[models.Id]StoreFunc{}
+
+type StoreFunc func(a *App) flux.StoreInterface
+
+func RegisterExternalStoreFunc(id models.Id, store StoreFunc) {
+	externalStoreFuncsM.Lock()
+	defer externalStoreFuncsM.Unlock()
+	externalStoreFuncs[id] = store
+}
+
+func GetExternalStoreFunc(id models.Id) StoreFunc {
+	externalStoreFuncsM.RLock()
+	defer externalStoreFuncsM.RUnlock()
+	return externalStoreFuncs[id]
 }

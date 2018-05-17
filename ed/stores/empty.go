@@ -4,9 +4,9 @@ import (
 	"github.com/dave/flux"
 )
 
-func NewEmptyStore(app *App) *EmptyStore {
+func NewEmptyStore(a *App) *EmptyStore {
 	s := &EmptyStore{
-		app: app,
+		app: a,
 	}
 	return s
 }

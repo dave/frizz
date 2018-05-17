@@ -1,6 +1,7 @@
 package views
 
 import (
+	"github.com/dave/frizz/ed/models"
 	"github.com/dave/frizz/ed/stores"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
@@ -32,10 +33,13 @@ func (v *Tree) Unmount() {
 }
 
 func (v *Tree) Render() vecty.ComponentOrHTML {
+	extView := GetExternalViewFunc(models.Id{"github.com/dave/frizz/ed/stores/ext", "View"})
+
 	return elem.Div(
 		vecty.Markup(
 			prop.ID("tree"),
 			vecty.Class("tree"),
 		),
+		extView(v.app, nil),
 	)
 }
