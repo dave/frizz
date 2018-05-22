@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package types
+package gotypes
 
 // A Type represents a type of Go.
 // All types implement the Type interface.
@@ -136,11 +136,6 @@ func (t *Tuple) At(i int) *Var { return t.Vars[i] }
 // A Signature represents a (non-builtin) function or method type.
 // The receiver is ignored when comparing signatures for identity.
 type Signature struct {
-	// We need to keep the scope in Signature (rather than passing it around
-	// and store it in the Func Object) because when type-checking a function
-	// literal we call the general type checker which returns a general Type.
-	// We then unpack the *Signature and use the scope for the literal body.
-	Scope *Scope // function scope, present for package-local signatures
 	// Recv returns the receiver of signature s (if a method), or nil if a
 	// function. It is ignored when comparing signatures for identity.
 	//

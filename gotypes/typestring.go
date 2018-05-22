@@ -4,7 +4,7 @@
 
 // This file implements printing of types.
 
-package types
+package gotypes
 
 import (
 	"bytes"
@@ -22,42 +22,21 @@ import (
 // Using a nil Qualifier is equivalent to using (*Package).Path: the
 // object is qualified by the import path, e.g., "encoding/json.Marshal".
 //
-type Qualifier func(*Package) string
+type Qualifier func(string) string
 
 // RelativeTo(pkg) returns a Qualifier that fully qualifies members of
 // all packages other than pkg.
-func RelativeTo(pkg *Package) Qualifier {
-	if pkg == nil {
+func RelativeTo(pkg string) Qualifier {
+	if pkg == "" {
 		return nil
 	}
-	return func(other *Package) string {
+	return func(other string) string {
 		if pkg == other {
 			return "" // same package; unqualified
 		}
-		return other.Path()
+		return other
 	}
 }
-
-// If gcCompatibilityMode is set, printing of types is modified
-// to match the representation of some types in the gc compiler:
-//
-//	- byte and rune lose their alias name and simply stand for
-//	  uint8 and int32 respectively
-//	- embedded interfaces get flattened (the embedding info is lost,
-//	  and certain recursive interface types cannot be printed anymore)
-//
-// This makes it easier to compare packages computed with the type-
-// checker vs packages imported from gc export data.
-//
-// Caution: This flag affects all uses of WriteType, globally.
-// It is only provided for testing in conjunction with
-// gc-generated data.
-//
-// This flag is exported in the x/tools/go/types package. We don't
-// need it at the moment in the std repo and so we don't export it
-// anymore. We should eventually try to remove it altogether.
-// TODO(gri) remove this
-var gcCompatibilityMode bool
 
 // TypeString returns the string representation of typ.
 // The Qualifier controls the printing of
@@ -93,39 +72,30 @@ func writeType(buf *bytes.Buffer, typ Type, qf Qualifier, visited []Type) {
 		buf.WriteString("<nil>")
 
 	case *Basic:
-		if t.kind == UnsafePointer {
+		if t.Kind == UnsafePointer {
 			buf.WriteString("unsafe.")
 		}
-		if gcCompatibilityMode {
-			// forget the alias names
-			switch t.kind {
-			case Byte:
-				t = Typ[Uint8]
-			case Rune:
-				t = Typ[Int32]
-			}
-		}
-		buf.WriteString(t.name)
+		buf.WriteString(t.Name)
 
 	case *Array:
-		fmt.Fprintf(buf, "[%d]", t.len)
-		writeType(buf, t.elem, qf, visited)
+		fmt.Fprintf(buf, "[%d]", t.Len)
+		writeType(buf, t.Elem, qf, visited)
 
 	case *Slice:
 		buf.WriteString("[]")
-		writeType(buf, t.elem, qf, visited)
+		writeType(buf, t.Elem, qf, visited)
 
 	case *Struct:
 		buf.WriteString("struct{")
-		for i, f := range t.fields {
+		for i, f := range t.Fields {
 			if i > 0 {
 				buf.WriteString("; ")
 			}
-			if !f.anonymous {
-				buf.WriteString(f.name)
+			if !f.Anonymous {
+				buf.WriteString(f.Name)
 				buf.WriteByte(' ')
 			}
-			writeType(buf, f.typ, qf, visited)
+			writeType(buf, f.Typ, qf, visited)
 			if tag := t.Tag(i); tag != "" {
 				fmt.Fprintf(buf, " %q", tag)
 			}
@@ -134,7 +104,7 @@ func writeType(buf *bytes.Buffer, typ Type, qf Qualifier, visited []Type) {
 
 	case *Pointer:
 		buf.WriteByte('*')
-		writeType(buf, t.base, qf, visited)
+		writeType(buf, t.Elem, qf, visited)
 
 	case *Tuple:
 		writeTuple(buf, t, false, qf, visited)
@@ -157,36 +127,23 @@ func writeType(buf *bytes.Buffer, typ Type, qf Qualifier, visited []Type) {
 		//
 		buf.WriteString("interface{")
 		empty := true
-		if gcCompatibilityMode {
-			// print flattened interface
-			// (useful to compare against gc-generated interfaces)
-			for i, m := range t.allMethods {
-				if i > 0 {
-					buf.WriteString("; ")
-				}
-				buf.WriteString(m.name)
-				writeSignature(buf, m.typ.(*Signature), qf, visited)
-				empty = false
+		// print explicit interface methods and embedded types
+		for i, m := range t.Methods {
+			if i > 0 {
+				buf.WriteString("; ")
 			}
-		} else {
-			// print explicit interface methods and embedded types
-			for i, m := range t.methods {
-				if i > 0 {
-					buf.WriteString("; ")
-				}
-				buf.WriteString(m.name)
-				writeSignature(buf, m.typ.(*Signature), qf, visited)
-				empty = false
-			}
-			for i, typ := range t.embeddeds {
-				if i > 0 || len(t.methods) > 0 {
-					buf.WriteString("; ")
-				}
-				writeType(buf, typ, qf, visited)
-				empty = false
-			}
+			buf.WriteString(m.Name)
+			writeSignature(buf, m.Typ.(*Signature), qf, visited)
+			empty = false
 		}
-		if t.allMethods == nil || len(t.methods) > len(t.allMethods) {
+		for i, typ := range t.Embeddeds {
+			if i > 0 || len(t.Methods) > 0 {
+				buf.WriteString("; ")
+			}
+			writeType(buf, typ, qf, visited)
+			empty = false
+		}
+		if t.AllMethods == nil || len(t.Methods) > len(t.AllMethods) {
 			if !empty {
 				buf.WriteByte(' ')
 			}
@@ -196,18 +153,18 @@ func writeType(buf *bytes.Buffer, typ Type, qf Qualifier, visited []Type) {
 
 	case *Map:
 		buf.WriteString("map[")
-		writeType(buf, t.key, qf, visited)
+		writeType(buf, t.Key, qf, visited)
 		buf.WriteByte(']')
-		writeType(buf, t.elem, qf, visited)
+		writeType(buf, t.Elem, qf, visited)
 
 	case *Chan:
 		var s string
 		var parens bool
-		switch t.dir {
+		switch t.Dir {
 		case SendRecv:
 			s = "chan "
 			// chan (<-chan T) requires parentheses
-			if c, _ := t.elem.(*Chan); c != nil && c.dir == RecvOnly {
+			if c, _ := t.Elem.(*Chan); c != nil && c.Dir == RecvOnly {
 				parens = true
 			}
 		case SendOnly:
@@ -221,21 +178,21 @@ func writeType(buf *bytes.Buffer, typ Type, qf Qualifier, visited []Type) {
 		if parens {
 			buf.WriteByte('(')
 		}
-		writeType(buf, t.elem, qf, visited)
+		writeType(buf, t.Elem, qf, visited)
 		if parens {
 			buf.WriteByte(')')
 		}
 
 	case *Named:
 		s := "<Named w/o object>"
-		if obj := t.obj; obj != nil {
-			if obj.pkg != nil {
-				writePackage(buf, obj.pkg, qf)
+		if obj := t.Obj; obj != nil {
+			if obj.Pkg != "" {
+				writePackage(buf, obj.Pkg, qf)
 			}
 			// TODO(gri): function-local named types should be displayed
 			// differently from named types at package level to avoid
 			// ambiguity.
-			s = obj.name
+			s = obj.Name
 		}
 		buf.WriteString(s)
 
@@ -248,23 +205,23 @@ func writeType(buf *bytes.Buffer, typ Type, qf Qualifier, visited []Type) {
 func writeTuple(buf *bytes.Buffer, tup *Tuple, variadic bool, qf Qualifier, visited []Type) {
 	buf.WriteByte('(')
 	if tup != nil {
-		for i, v := range tup.vars {
+		for i, v := range tup.Vars {
 			if i > 0 {
 				buf.WriteString(", ")
 			}
-			if v.name != "" {
-				buf.WriteString(v.name)
+			if v.Name != "" {
+				buf.WriteString(v.Name)
 				buf.WriteByte(' ')
 			}
-			typ := v.typ
-			if variadic && i == len(tup.vars)-1 {
+			typ := v.Typ
+			if variadic && i == len(tup.Vars)-1 {
 				if s, ok := typ.(*Slice); ok {
 					buf.WriteString("...")
-					typ = s.elem
+					typ = s.Elem
 				} else {
 					// special case:
 					// append(s, "foo"...) leads to signature func([]byte, string...)
-					if t, ok := typ.Underlying().(*Basic); !ok || t.kind != String {
+					if t, ok := typ.Underlying().(*Basic); !ok || t.Kind != String {
 						panic("internal error: string type expected")
 					}
 					writeType(buf, typ, qf, visited)
@@ -287,21 +244,21 @@ func WriteSignature(buf *bytes.Buffer, sig *Signature, qf Qualifier) {
 }
 
 func writeSignature(buf *bytes.Buffer, sig *Signature, qf Qualifier, visited []Type) {
-	writeTuple(buf, sig.params, sig.variadic, qf, visited)
+	writeTuple(buf, sig.Params, sig.Variadic, qf, visited)
 
-	n := sig.results.Len()
+	n := sig.Results.Len()
 	if n == 0 {
 		// no result
 		return
 	}
 
 	buf.WriteByte(' ')
-	if n == 1 && sig.results.vars[0].name == "" {
+	if n == 1 && sig.Results.Vars[0].Name == "" {
 		// single unnamed result
-		writeType(buf, sig.results.vars[0].typ, qf, visited)
+		writeType(buf, sig.Results.Vars[0].Typ, qf, visited)
 		return
 	}
 
 	// multiple or named result(s)
-	writeTuple(buf, sig.results, false, qf, visited)
+	writeTuple(buf, sig.Results, false, qf, visited)
 }
