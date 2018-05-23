@@ -14,6 +14,12 @@ type Type interface {
 	String() string
 }
 
+// When a circular reference is detected, this is used as a placeholder
+type Circular string
+
+func (Circular) Underlying() Type { return nil }
+func (c Circular) String() string { return string(c) }
+
 // BasicKind describes the kind of basic type.
 type BasicKind int
 
