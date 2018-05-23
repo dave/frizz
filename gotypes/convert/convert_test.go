@@ -1,4 +1,4 @@
-package data
+package convert
 
 import (
 	"go/parser"
@@ -55,11 +55,12 @@ func TestConvertType(t *testing.T) {
 			`Foo: *gotypes.Basic: {"Kind":2,"Info":2,"Name":"int"}
 			Bar: *gotypes.Basic: {"Kind":2,"Info":2,"Name":"int"}`,
 		},
-		"complex": {
+		"struct": {
 			`type Foo struct {
-				bar string
+				Bar string
+				baz string
 			}`,
-			`Foo: *gotypes.Struct: {"Fields":[{"Pkg":"foo","Name":"bar","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":true}],"Tags":[""]}`,
+			`Foo: *gotypes.Struct: {"Fields":[{"Pkg":"foo","Name":"Bar","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":true},{"Pkg":"foo","Name":"baz","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":true}],"Tags":["",""]}`,
 		},
 		"array": {
 			`type Foo [2]string`,
@@ -73,7 +74,7 @@ func TestConvertType(t *testing.T) {
 			`type Foo *int`,
 			`Foo: *gotypes.Pointer: {"Elem":{"Kind":2,"Info":2,"Name":"int"}}`,
 		},
-		"func": {
+		"func type": {
 			`type Foo func(int)`,
 			`Foo: *gotypes.Signature: {"Recv":null,"Params":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":2,"Info":2,"Name":"int"},"Anonymous":false,"IsField":false}]},"Results":{"Vars":null},"Variadic":false}`,
 		},
@@ -107,6 +108,10 @@ func TestConvertType(t *testing.T) {
 			`type Foo struct{}
 			func (f Foo) Bar() int { return 1 }`,
 			`Foo: *gotypes.Struct: {"Fields":null,"Tags":null}, methods: [{"Pkg":"foo","Name":"Bar","Typ":{"Recv":{"Pkg":"foo","Name":"f","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":2,"Info":2,"Name":"int"},"Anonymous":false,"IsField":false}]},"Variadic":false}}]`,
+		},
+		"func": {
+			`func Foo() {}`,
+			``,
 		},
 	}
 	for name, test := range tests {
@@ -147,7 +152,7 @@ func TestConvertType(t *testing.T) {
 		sort.Slice(defs, func(i, j int) bool { return defs[i].Obj().Pos() < defs[j].Obj().Pos() })
 		var globals []*gotypes.Named
 		for _, v := range defs {
-			globals = append(globals, ConvertType(v, &[]types.Type{}).(*gotypes.Named))
+			globals = append(globals, Type(v, &[]types.Type{}).(*gotypes.Named))
 		}
 		buf := &bytes.Buffer{}
 		for _, g := range globals {

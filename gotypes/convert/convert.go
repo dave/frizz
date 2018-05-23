@@ -1,4 +1,4 @@
-package data
+package convert
 
 import (
 	"go/types"
@@ -6,7 +6,7 @@ import (
 	"github.com/dave/frizz/gotypes"
 )
 
-func ConvertType(t types.Type, stack *[]types.Type) gotypes.Type {
+func Type(t types.Type, stack *[]types.Type) gotypes.Type {
 	for _, stacked := range *stack {
 		if t == stacked {
 			return gotypes.Circular("circular reference")
@@ -26,17 +26,17 @@ func ConvertType(t types.Type, stack *[]types.Type) gotypes.Type {
 	case *types.Array:
 		return &gotypes.Array{
 			Len:  t.Len(),
-			Elem: ConvertType(t.Elem(), stack),
+			Elem: Type(t.Elem(), stack),
 		}
 	case *types.Slice:
 		return &gotypes.Slice{
-			Elem: ConvertType(t.Elem(), stack),
+			Elem: Type(t.Elem(), stack),
 		}
 	case *types.Struct:
 		var fields []*gotypes.Var
 		var tags []string
 		for i := 0; i < t.NumFields(); i++ {
-			fields = append(fields, ConvertVar(t.Field(i), stack))
+			fields = append(fields, Var(t.Field(i), stack))
 			tags = append(tags, t.Tag(i))
 		}
 		return &gotypes.Struct{
@@ -45,21 +45,21 @@ func ConvertType(t types.Type, stack *[]types.Type) gotypes.Type {
 		}
 	case *types.Pointer:
 		return &gotypes.Pointer{
-			Elem: ConvertType(t.Elem(), stack),
+			Elem: Type(t.Elem(), stack),
 		}
 	case *types.Tuple:
 		var vars []*gotypes.Var
 		for i := 0; i < t.Len(); i++ {
-			vars = append(vars, ConvertVar(t.At(i), stack))
+			vars = append(vars, Var(t.At(i), stack))
 		}
 		return &gotypes.Tuple{
 			Vars: vars,
 		}
 	case *types.Signature:
 		return &gotypes.Signature{
-			Recv:     ConvertVar(t.Recv(), stack),
-			Params:   ConvertType(t.Params(), stack).(*gotypes.Tuple),
-			Results:  ConvertType(t.Results(), stack).(*gotypes.Tuple),
+			Recv:     Var(t.Recv(), stack),
+			Params:   Type(t.Params(), stack).(*gotypes.Tuple),
+			Results:  Type(t.Results(), stack).(*gotypes.Tuple),
 			Variadic: t.Variadic(),
 		}
 	case *types.Interface:
@@ -67,13 +67,13 @@ func ConvertType(t types.Type, stack *[]types.Type) gotypes.Type {
 		var embeddeds []*gotypes.Named
 		var allMethods []*gotypes.Func
 		for i := 0; i < t.NumExplicitMethods(); i++ {
-			methods = append(methods, ConvertFunc(t.ExplicitMethod(i), stack))
+			methods = append(methods, Func(t.ExplicitMethod(i), stack))
 		}
 		for i := 0; i < t.NumEmbeddeds(); i++ {
-			embeddeds = append(embeddeds, ConvertType(t.Embedded(i), stack).(*gotypes.Named))
+			embeddeds = append(embeddeds, Type(t.Embedded(i), stack).(*gotypes.Named))
 		}
 		for i := 0; i < t.NumMethods(); i++ {
-			allMethods = append(allMethods, ConvertFunc(t.Method(i), stack))
+			allMethods = append(allMethods, Func(t.Method(i), stack))
 		}
 		return &gotypes.Interface{
 			Methods:    methods,
@@ -82,18 +82,18 @@ func ConvertType(t types.Type, stack *[]types.Type) gotypes.Type {
 		}
 	case *types.Map:
 		return &gotypes.Map{
-			Key:  ConvertType(t.Key(), stack),
-			Elem: ConvertType(t.Elem(), stack),
+			Key:  Type(t.Key(), stack),
+			Elem: Type(t.Elem(), stack),
 		}
 	case *types.Chan:
 		return &gotypes.Chan{
 			Dir:  gotypes.ChanDir(t.Dir()),
-			Elem: ConvertType(t.Elem(), stack),
+			Elem: Type(t.Elem(), stack),
 		}
 	case *types.Named:
 		var methods []*gotypes.Func
 		for i := 0; i < t.NumMethods(); i++ {
-			methods = append(methods, ConvertFunc(t.Method(i), stack))
+			methods = append(methods, Func(t.Method(i), stack))
 		}
 		var path string
 		if t.Obj().Pkg() != nil {
@@ -104,10 +104,10 @@ func ConvertType(t types.Type, stack *[]types.Type) gotypes.Type {
 				Obj: gotypes.Obj{
 					Pkg:  path,
 					Name: t.Obj().Name(),
-					Typ:  ConvertType(t.Obj().Type(), stack),
+					Typ:  Type(t.Obj().Type(), stack),
 				},
 			},
-			Type:    ConvertType(t.Underlying(), stack),
+			Type:    Type(t.Underlying(), stack),
 			Methods: methods,
 		}
 	}
@@ -115,7 +115,7 @@ func ConvertType(t types.Type, stack *[]types.Type) gotypes.Type {
 	return nil
 }
 
-func ConvertFunc(f *types.Func, stack *[]types.Type) *gotypes.Func {
+func Func(f *types.Func, stack *[]types.Type) *gotypes.Func {
 	if f == nil {
 		// notest
 		return nil
@@ -128,12 +128,12 @@ func ConvertFunc(f *types.Func, stack *[]types.Type) *gotypes.Func {
 		Obj: gotypes.Obj{
 			Pkg:  path,
 			Name: f.Name(),
-			Typ:  ConvertType(f.Type(), stack),
+			Typ:  Type(f.Type(), stack),
 		},
 	}
 }
 
-func ConvertVar(v *types.Var, stack *[]types.Type) *gotypes.Var {
+func Var(v *types.Var, stack *[]types.Type) *gotypes.Var {
 	if v == nil {
 		return nil
 	}
@@ -145,7 +145,7 @@ func ConvertVar(v *types.Var, stack *[]types.Type) *gotypes.Var {
 		Obj: gotypes.Obj{
 			Pkg:  path,
 			Name: v.Name(),
-			Typ:  ConvertType(v.Type(), stack),
+			Typ:  Type(v.Type(), stack),
 		},
 		Anonymous: v.Anonymous(),
 		IsField:   v.IsField(),
