@@ -71,21 +71,21 @@ func writeType(buf *bytes.Buffer, typ Type, qf Qualifier, visited []Type) {
 	case nil:
 		buf.WriteString("<nil>")
 
-	case *Basic:
+	case Basic:
 		if t.Kind == UnsafePointer {
 			buf.WriteString("unsafe.")
 		}
 		buf.WriteString(t.Name)
 
-	case *Array:
+	case Array:
 		fmt.Fprintf(buf, "[%d]", t.Len)
 		writeType(buf, t.Elem, qf, visited)
 
-	case *Slice:
+	case Slice:
 		buf.WriteString("[]")
 		writeType(buf, t.Elem, qf, visited)
 
-	case *Struct:
+	case Struct:
 		buf.WriteString("struct{")
 		for i, f := range t.Fields {
 			if i > 0 {
@@ -102,18 +102,18 @@ func writeType(buf *bytes.Buffer, typ Type, qf Qualifier, visited []Type) {
 		}
 		buf.WriteByte('}')
 
-	case *Pointer:
+	case Pointer:
 		buf.WriteByte('*')
 		writeType(buf, t.Elem, qf, visited)
 
-	case *Tuple:
+	case Tuple:
 		writeTuple(buf, t, false, qf, visited)
 
-	case *Signature:
+	case Signature:
 		buf.WriteString("func")
 		writeSignature(buf, t, qf, visited)
 
-	case *Interface:
+	case Interface:
 		// We write the source-level methods and embedded types rather
 		// than the actual method set since resolved method signatures
 		// may have non-printable cycles if parameters have anonymous
@@ -133,7 +133,7 @@ func writeType(buf *bytes.Buffer, typ Type, qf Qualifier, visited []Type) {
 				buf.WriteString("; ")
 			}
 			buf.WriteString(m.Name)
-			writeSignature(buf, m.Typ.(*Signature), qf, visited)
+			writeSignature(buf, m.Typ.(Signature), qf, visited)
 			empty = false
 		}
 		for i, typ := range t.Embeddeds {
@@ -151,20 +151,20 @@ func writeType(buf *bytes.Buffer, typ Type, qf Qualifier, visited []Type) {
 		}
 		buf.WriteByte('}')
 
-	case *Map:
+	case Map:
 		buf.WriteString("map[")
 		writeType(buf, t.Key, qf, visited)
 		buf.WriteByte(']')
 		writeType(buf, t.Elem, qf, visited)
 
-	case *Chan:
+	case Chan:
 		var s string
 		var parens bool
 		switch t.Dir {
 		case SendRecv:
 			s = "chan "
 			// chan (<-chan T) requires parentheses
-			if c, _ := t.Elem.(*Chan); c != nil && c.Dir == RecvOnly {
+			if c, _ := t.Elem.(Chan); c.Dir == RecvOnly {
 				parens = true
 			}
 		case SendOnly:
@@ -183,17 +183,16 @@ func writeType(buf *bytes.Buffer, typ Type, qf Qualifier, visited []Type) {
 			buf.WriteByte(')')
 		}
 
-	case *Named:
+	case Named:
 		s := "<Named w/o object>"
-		if obj := t.Obj; obj != nil {
-			if obj.Pkg != "" {
-				writePackage(buf, obj.Pkg, qf)
-			}
-			// TODO(gri): function-local named types should be displayed
-			// differently from named types at package level to avoid
-			// ambiguity.
-			s = obj.Name
+		obj := t.Obj
+		if obj.Pkg != "" {
+			writePackage(buf, obj.Pkg, qf)
 		}
+		// TODO(gri): function-local named types should be displayed
+		// differently from named types at package level to avoid
+		// ambiguity.
+		s = obj.Name
 		buf.WriteString(s)
 
 	default:
@@ -202,35 +201,33 @@ func writeType(buf *bytes.Buffer, typ Type, qf Qualifier, visited []Type) {
 	}
 }
 
-func writeTuple(buf *bytes.Buffer, tup *Tuple, variadic bool, qf Qualifier, visited []Type) {
+func writeTuple(buf *bytes.Buffer, tup Tuple, variadic bool, qf Qualifier, visited []Type) {
 	buf.WriteByte('(')
-	if tup != nil {
-		for i, v := range tup.Vars {
-			if i > 0 {
-				buf.WriteString(", ")
-			}
-			if v.Name != "" {
-				buf.WriteString(v.Name)
-				buf.WriteByte(' ')
-			}
-			typ := v.Typ
-			if variadic && i == len(tup.Vars)-1 {
-				if s, ok := typ.(*Slice); ok {
-					buf.WriteString("...")
-					typ = s.Elem
-				} else {
-					// special case:
-					// append(s, "foo"...) leads to signature func([]byte, string...)
-					if t, ok := typ.Underlying().(*Basic); !ok || t.Kind != String {
-						panic("internal error: string type expected")
-					}
-					writeType(buf, typ, qf, visited)
-					buf.WriteString("...")
-					continue
-				}
-			}
-			writeType(buf, typ, qf, visited)
+	for i, v := range tup.Vars {
+		if i > 0 {
+			buf.WriteString(", ")
 		}
+		if v.Name != "" {
+			buf.WriteString(v.Name)
+			buf.WriteByte(' ')
+		}
+		typ := v.Typ
+		if variadic && i == len(tup.Vars)-1 {
+			if s, ok := typ.(Slice); ok {
+				buf.WriteString("...")
+				typ = s.Elem
+			} else {
+				// special case:
+				// append(s, "foo"...) leads to signature func([]byte, string...)
+				if t, ok := typ.Underlying().(Basic); !ok || t.Kind != String {
+					panic("internal error: string type expected")
+				}
+				writeType(buf, typ, qf, visited)
+				buf.WriteString("...")
+				continue
+			}
+		}
+		writeType(buf, typ, qf, visited)
 	}
 	buf.WriteByte(')')
 }
@@ -239,11 +236,11 @@ func writeTuple(buf *bytes.Buffer, tup *Tuple, variadic bool, qf Qualifier, visi
 // without a leading "func" keyword.
 // The Qualifier controls the printing of
 // package-level objects, and may be nil.
-func WriteSignature(buf *bytes.Buffer, sig *Signature, qf Qualifier) {
+func WriteSignature(buf *bytes.Buffer, sig Signature, qf Qualifier) {
 	writeSignature(buf, sig, qf, make([]Type, 0, 8))
 }
 
-func writeSignature(buf *bytes.Buffer, sig *Signature, qf Qualifier, visited []Type) {
+func writeSignature(buf *bytes.Buffer, sig Signature, qf Qualifier, visited []Type) {
 	writeTuple(buf, sig.Params, sig.Variadic, qf, visited)
 
 	n := sig.Results.Len()

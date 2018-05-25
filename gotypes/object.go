@@ -37,9 +37,9 @@ type Obj struct {
 	Typ  Type
 }
 
-func (obj *Obj) Exported() bool { return ast.IsExported(obj.Name) }
-func (obj *Obj) Id() string     { return Id(obj.Pkg, obj.Name) }
-func (obj *Obj) String() string { panic("abstract") }
+func (obj Obj) Exported() bool { return ast.IsExported(obj.Name) }
+func (obj Obj) Id() string     { return Id(obj.Pkg, obj.Name) }
+func (obj Obj) String() string { panic("abstract") }
 
 // A PkgName represents an imported Go package.
 // PkgNames don't have a type.
@@ -54,7 +54,7 @@ type Const struct {
 	Val constant.Value
 }
 
-func (*Const) isDependency() {} // a constant may be a dependency of an initialization expression
+func (Const) isDependency() {} // a constant may be a dependency of an initialization expression
 
 // A TypeName represents a name for a (named or alias) type.
 type TypeName struct {
@@ -62,11 +62,11 @@ type TypeName struct {
 }
 
 // IsAlias reports whether obj is an alias name for a type.
-func (obj *TypeName) IsAlias() bool {
+func (obj TypeName) IsAlias() bool {
 	switch t := obj.Typ.(type) {
 	case nil:
 		return false
-	case *Basic:
+	case Basic:
 		// unsafe.Pointer is not an alias.
 		if obj.Pkg == "unsafe" {
 			return false
@@ -78,7 +78,7 @@ func (obj *TypeName) IsAlias() bool {
 		// Additionally, we need to look for "byte" and "rune" because they
 		// are aliases but have the same names (for better error messages).
 		return obj.Pkg != "" || t.Name != obj.Name || t.Name == "byte" || t.Name == "rune"
-	case *Named:
+	case Named:
 		return obj != t.Obj
 	default:
 		return true
@@ -92,10 +92,10 @@ type Var struct {
 	IsField   bool // IsField reports whether the variable is a struct field.
 }
 
-func (*Var) isDependency() {} // a variable may be a dependency of an initialization expression
+func (Var) isDependency() {} // a variable may be a dependency of an initialization expression
 
 // A Func represents a declared function, concrete method, or abstract
-// (interface) method. Its Type() is always a *Signature.
+// (interface) method. Its Type() is always a Signature.
 // An abstract method may belong to many interfaces due to embedding.
 type Func struct {
 	Obj
@@ -103,13 +103,13 @@ type Func struct {
 
 // FullName returns the package- or receiver-type-qualified name of
 // function or method obj.
-func (obj *Func) FullName() string {
+func (obj Func) FullName() string {
 	var buf bytes.Buffer
 	writeFuncName(&buf, obj, nil)
 	return buf.String()
 }
 
-func (*Func) isDependency() {} // a function may be a dependency of an initialization expression
+func (Func) isDependency() {} // a function may be a dependency of an initialization expression
 
 // A Label represents a declared label.
 // Labels don't have a type.
@@ -145,21 +145,21 @@ func writePackage(buf *bytes.Buffer, pkg string, qf Qualifier) {
 	}
 }
 
-func (obj *PkgName) String() string  { return obj.Pkg }
-func (obj *Const) String() string    { return obj.Name }
-func (obj *TypeName) String() string { return obj.Pkg + "." + obj.Name }
-func (obj *Var) String() string      { return obj.Name }
-func (obj *Func) String() string     { return obj.FullName() }
-func (obj *Label) String() string    { return obj.Name }
-func (obj *Builtin) String() string  { return obj.Name }
-func (obj *Nil) String() string      { return obj.Name }
+func (obj PkgName) String() string  { return obj.Pkg }
+func (obj Const) String() string    { return obj.Name }
+func (obj TypeName) String() string { return obj.Pkg + "." + obj.Name }
+func (obj Var) String() string      { return obj.Name }
+func (obj Func) String() string     { return obj.FullName() }
+func (obj Label) String() string    { return obj.Name }
+func (obj Builtin) String() string  { return obj.Name }
+func (obj Nil) String() string      { return obj.Name }
 
-func writeFuncName(buf *bytes.Buffer, f *Func, qf Qualifier) {
+func writeFuncName(buf *bytes.Buffer, f Func, qf Qualifier) {
 	if f.Typ != nil {
-		sig := f.Typ.(*Signature)
-		if recv := sig.Recv; recv != nil {
+		sig := f.Typ.(Signature)
+		if recv := sig.Recv; recv != (Var{}) {
 			buf.WriteByte('(')
-			if _, ok := recv.Typ.(*Interface); ok {
+			if _, ok := recv.Typ.(Interface); ok {
 				// gcimporter creates abstract methods of
 				// named interfaces using the interface type
 				// (not the named type) as the receiver.
