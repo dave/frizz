@@ -24,13 +24,13 @@ import (
 	"github.com/dave/frizz/server/assets"
 	"github.com/dave/frizz/server/messages"
 	"github.com/dave/frizz/server/srcimporter"
-	"github.com/dave/jsgo/builder/session"
 	"github.com/dave/jsgo/getter/get"
+	"github.com/dave/services/session"
 )
 
 func (h *Handler) Types(ctx context.Context, info messages.Types, req *http.Request, send func(message messages.Message), receive chan messages.Message) error {
 
-	s := session.New(nil, assets.Assets)
+	s := session.New(nil, assets.Assets, config.ValidExtensions)
 
 	gitreq := h.Cache.NewRequest(true)
 	if err := gitreq.InitialiseFromHints(ctx, info.Path); err != nil {

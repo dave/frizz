@@ -53,6 +53,7 @@ func New(shutdown chan struct{}) *Handler {
 			database,
 			fetcherResolver,
 			fetcherResolver,
+			config.HintsKind,
 		)
 	} else {
 		storageClient, err := storage.NewClient(context.Background())
@@ -78,6 +79,7 @@ func New(shutdown chan struct{}) *Handler {
 				config.GitBucket,
 			),
 			nil,
+			config.HintsKind,
 		)
 	}
 	h := &Handler{

@@ -9,4 +9,5 @@ const (
 	GitBucket = "git.jsgo.io"
 
 	ErrorKind = "Error"
+	HintsKind = "Hints"
 )
