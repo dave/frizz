@@ -3,7 +3,7 @@ package gotypes
 import "encoding/gob"
 
 func RegisterTypes() {
-	gob.Register(Circular(""))
+	gob.Register(Circular{})
 	gob.Register(Basic{})
 	gob.Register(Array{})
 	gob.Register(Slice{})

@@ -9,7 +9,7 @@ import (
 func Type(t types.Type, stack *[]types.Type) gotypes.Type {
 	for _, stacked := range *stack {
 		if t == stacked {
-			return gotypes.Circular("circular reference")
+			return gotypes.Circular{}
 		}
 	}
 	*stack = append(*stack, t)
@@ -103,9 +103,6 @@ func Type(t types.Type, stack *[]types.Type) gotypes.Type {
 			Elem: Type(t.Elem(), stack),
 		}
 	case *types.Named:
-		if !t.Obj().Exported() {
-			return nil
-		}
 		var methods []gotypes.Func
 		for i := 0; i < t.NumMethods(); i++ {
 			if !t.Method(i).Exported() {

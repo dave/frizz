@@ -48,14 +48,14 @@ func TestConvertType(t *testing.T) {
 			`type Foo string
 			 func (Foo) bar(){}
 			 func (Foo) Baz(){}`,
-			`Foo: gotypes.Basic: {"Kind":17,"Info":32,"Name":"string"}, methods: [{"Pkg":"foo","Name":"Baz","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":null},"Variadic":false}}]`,
+			`Foo: gotypes.Basic: {"Kind":17,"Info":32,"Name":"string"}, methods: [{"Pkg":"foo","Name":"Baz","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":null},"Variadic":false}}]`,
 		},
 		"ignore non-exported interface methods": {
 			`type Foo interface {
 				foo()
 				Bar()
 			}`,
-			`Foo: gotypes.Interface: {"Methods":[{"Pkg":"foo","Name":"Bar","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":null},"Variadic":false}}],"Embeddeds":null,"AllMethods":[{"Pkg":"foo","Name":"Bar","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":null},"Variadic":false}}]}`,
+			`Foo: gotypes.Interface: {"Methods":[{"Pkg":"foo","Name":"Bar","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":null},"Variadic":false}}],"Embeddeds":null,"AllMethods":[{"Pkg":"foo","Name":"Bar","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":null},"Variadic":false}}]}`,
 		},
 		"ignore non-exported interface embeds": {
 			`type foo interface{}
@@ -65,7 +65,21 @@ func TestConvertType(t *testing.T) {
 				Bar
 			}`,
 			`Bar: gotypes.Interface: {"Methods":null,"Embeddeds":null,"AllMethods":null}
-			Baz: gotypes.Interface: {"Methods":null,"Embeddeds":[{"Obj":{"Pkg":"foo","Name":"Bar","Typ":"circular reference"},"Type":{"Methods":null,"Embeddeds":null,"AllMethods":null},"Methods":null}],"AllMethods":null}`,
+			Baz: gotypes.Interface: {"Methods":null,"Embeddeds":[{"Obj":{"Pkg":"foo","Name":"Bar","Typ":{}},"Type":{"Methods":null,"Embeddeds":null,"AllMethods":null},"Methods":null}],"AllMethods":null}`,
+		},
+		"include exported alias of non-exported type": {
+			`type foo struct {
+				Bar string
+			}
+			type Baz foo`,
+			`Baz: gotypes.Struct: {"Fields":[{"Pkg":"foo","Name":"Bar","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":true}],"Tags":[""]}`,
+		},
+		"include exported pointer to non-exported type": {
+			`type foo struct {
+				Bar string
+			}
+			type Baz *foo`,
+			`Baz: gotypes.Pointer: {"Elem":{"Obj":{"Pkg":"foo","Name":"foo","Typ":{}},"Type":{"Fields":[{"Pkg":"foo","Name":"Bar","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":true}],"Tags":[""]},"Methods":null}}`,
 		},
 		"two types": {
 			`type Foo int64
@@ -107,7 +121,7 @@ func TestConvertType(t *testing.T) {
 				A() string
 				B(int, ...string)
 			}`,
-			`Foo: gotypes.Interface: {"Methods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}},{"Pkg":"foo","Name":"B","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":2,"Info":2,"Name":"int"},"Anonymous":false,"IsField":false},{"Pkg":"foo","Name":"","Typ":{"Elem":{"Kind":17,"Info":32,"Name":"string"}},"Anonymous":false,"IsField":false}]},"Results":{"Vars":null},"Variadic":true}}],"Embeddeds":null,"AllMethods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}},{"Pkg":"foo","Name":"B","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":2,"Info":2,"Name":"int"},"Anonymous":false,"IsField":false},{"Pkg":"foo","Name":"","Typ":{"Elem":{"Kind":17,"Info":32,"Name":"string"}},"Anonymous":false,"IsField":false}]},"Results":{"Vars":null},"Variadic":true}}]}`,
+			`Foo: gotypes.Interface: {"Methods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}},{"Pkg":"foo","Name":"B","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":2,"Info":2,"Name":"int"},"Anonymous":false,"IsField":false},{"Pkg":"foo","Name":"","Typ":{"Elem":{"Kind":17,"Info":32,"Name":"string"}},"Anonymous":false,"IsField":false}]},"Results":{"Vars":null},"Variadic":true}}],"Embeddeds":null,"AllMethods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}},{"Pkg":"foo","Name":"B","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":2,"Info":2,"Name":"int"},"Anonymous":false,"IsField":false},{"Pkg":"foo","Name":"","Typ":{"Elem":{"Kind":17,"Info":32,"Name":"string"}},"Anonymous":false,"IsField":false}]},"Results":{"Vars":null},"Variadic":true}}]}`,
 		},
 		"interface with embeds": {
 			`type Foo interface{
@@ -117,8 +131,8 @@ func TestConvertType(t *testing.T) {
 				Foo
 				B() string
 			}`,
-			`Foo: gotypes.Interface: {"Methods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}}],"Embeddeds":null,"AllMethods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}}]}
-			Bar: gotypes.Interface: {"Methods":[{"Pkg":"foo","Name":"B","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}}],"Embeddeds":[{"Obj":{"Pkg":"foo","Name":"Foo","Typ":"circular reference"},"Type":{"Methods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}}],"Embeddeds":null,"AllMethods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}}]},"Methods":null}],"AllMethods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{"Obj":{"Pkg":"foo","Name":"Foo","Typ":"circular reference"},"Type":{"Methods":[{"Pkg":"foo","Name":"A","Typ":"circular reference"}],"Embeddeds":null,"AllMethods":[{"Pkg":"foo","Name":"A","Typ":"circular reference"}]},"Methods":null},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}},{"Pkg":"foo","Name":"B","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}}]}`,
+			`Foo: gotypes.Interface: {"Methods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}}],"Embeddeds":null,"AllMethods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}}]}
+			Bar: gotypes.Interface: {"Methods":[{"Pkg":"foo","Name":"B","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}}],"Embeddeds":[{"Obj":{"Pkg":"foo","Name":"Foo","Typ":{}},"Type":{"Methods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}}],"Embeddeds":null,"AllMethods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}}]},"Methods":null}],"AllMethods":[{"Pkg":"foo","Name":"A","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{"Obj":{"Pkg":"foo","Name":"Foo","Typ":{}},"Type":{"Methods":[{"Pkg":"foo","Name":"A","Typ":{}}],"Embeddeds":null,"AllMethods":[{"Pkg":"foo","Name":"A","Typ":{}}]},"Methods":null},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}},{"Pkg":"foo","Name":"B","Typ":{"Recv":{"Pkg":"foo","Name":"","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":17,"Info":32,"Name":"string"},"Anonymous":false,"IsField":false}]},"Variadic":false}}]}`,
 		},
 		"map": {
 			`type Foo map[string]int`,
@@ -131,12 +145,16 @@ func TestConvertType(t *testing.T) {
 		"methods": {
 			`type Foo struct{}
 			func (f Foo) Bar() int { return 1 }`,
-			`Foo: gotypes.Struct: {"Fields":null,"Tags":null}, methods: [{"Pkg":"foo","Name":"Bar","Typ":{"Recv":{"Pkg":"foo","Name":"f","Typ":"circular reference","Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":2,"Info":2,"Name":"int"},"Anonymous":false,"IsField":false}]},"Variadic":false}}]`,
+			`Foo: gotypes.Struct: {"Fields":null,"Tags":null}, methods: [{"Pkg":"foo","Name":"Bar","Typ":{"Recv":{"Pkg":"foo","Name":"f","Typ":{},"Anonymous":false,"IsField":false},"Params":{"Vars":null},"Results":{"Vars":[{"Pkg":"foo","Name":"","Typ":{"Kind":2,"Info":2,"Name":"int"},"Anonymous":false,"IsField":false}]},"Variadic":false}}]`,
 		},
 		"func": {
 			`func Foo() {}`,
 			``,
 		},
+	}
+	const single = ""
+	if single != "" {
+		tests = map[string]spec{single: tests[single]}
 	}
 	for name, test := range tests {
 		fset := token.NewFileSet()
@@ -161,6 +179,9 @@ func TestConvertType(t *testing.T) {
 				continue
 			}
 			if v.Parent() != p.Scope() {
+				continue
+			}
+			if !v.Exported() {
 				continue
 			}
 			tn, ok := v.(*types.TypeName)
@@ -201,6 +222,9 @@ func TestConvertType(t *testing.T) {
 		if strings.TrimSpace(buf.String()) != indent.ReplaceAllString(test.expected, "") {
 			t.Fatalf("%s, got:\n%s", name, buf.String())
 		}
+	}
+	if single != "" {
+		t.Fatal("single test")
 	}
 }
 
