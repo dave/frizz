@@ -14,6 +14,12 @@ const (
 	// FrizzHost is the domain
 	FrizzHost = "frizz.io"
 
+	// MaxConcurrentRequests is the maximum number of concurrent requests per server
+	MaxConcurrentRequests = 2
+
+	// MaxQueue is the maximum queue length waiting for compile. After this an error is returned.
+	MaxQueue = 100
+
 	AssetsFilename = "assets.zip"
 
 	// WriteTimeout is the timeout when serving static files
@@ -38,6 +44,9 @@ const (
 	// playground compile)
 	WebsocketInstructionTimeout = time.Second * 5
 
+	// WebsocketTimeout is the overall timeout for websockets
+	WebsocketTimeout = time.Second * 360
+
 	// GitCloneTimeout is the time to wait for a git clone operation
 	GitCloneTimeout = time.Second * 120
 
@@ -55,3 +64,5 @@ const (
 
 	ConcurrentStorageUploads = 10
 )
+
+var ValidExtensions = [...]string{".go", ".jsgo.html", ".inc.js", ".md"}

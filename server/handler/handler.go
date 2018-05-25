@@ -20,16 +20,20 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"cloud.google.com/go/storage"
-	"github.com/dave/jsgo/assets"
-	"github.com/dave/jsgo/config"
-	"github.com/dave/jsgo/server/messages"
+	"github.com/dave/frizz/config"
+	"github.com/dave/frizz/server/assets"
+	"github.com/dave/frizz/server/messages"
+	"github.com/dave/jsgo/getter/cache"
 	"github.com/dave/jsgo/server/queue"
 	"github.com/dave/jsgo/server/store"
 	"github.com/dave/jsgo/services"
+	"github.com/dave/jsgo/services/cachefileserver"
 	"github.com/dave/jsgo/services/gcsdatabase"
 	"github.com/dave/jsgo/services/gcsfileserver"
+	"github.com/dave/jsgo/services/gitfetcher"
 	"github.com/dave/jsgo/services/localdatabase"
 	"github.com/dave/jsgo/services/localfileserver"
+	"github.com/dave/jsgo/services/localresolverfetcher"
 	"github.com/dave/patsy"
 	"github.com/dave/patsy/vos"
 	"github.com/gorilla/websocket"
@@ -38,11 +42,18 @@ import (
 )
 
 func New(shutdown chan struct{}) *Handler {
+	var c *cache.Cache
 	var fileserver services.Fileserver
 	var database services.Database
 	if config.LOCAL {
 		fileserver = localfileserver.New(config.LocalFileserverTempDir)
 		database = localdatabase.New(config.LocalFileserverTempDir)
+		fetcherResolver := localfetcher.New()
+		c = cache.New(
+			database,
+			fetcherResolver,
+			fetcherResolver,
+		)
 	} else {
 		storageClient, err := storage.NewClient(context.Background())
 		if err != nil {
@@ -56,11 +67,17 @@ func New(shutdown chan struct{}) *Handler {
 
 		database = gcsdatabase.New(datastoreClient)
 		fileserver = gcsfileserver.New(storageClient)
+		c = cache.New(
+			database,
+			gitfetcher.New(cachefileserver.New(1024*1024*1042, 100*1024*1024), fileserver),
+			nil,
+		)
 	}
 	h := &Handler{
+		Cache:      c,
 		mux:        http.NewServeMux(),
 		shutdown:   shutdown,
-		Queue:      queue.New(config.MaxConcurrentCompiles, config.MaxQueue),
+		Queue:      queue.New(config.MaxConcurrentRequests, config.MaxQueue),
 		Waitgroup:  &sync.WaitGroup{},
 		Fileserver: fileserver,
 		Database:   database,
@@ -69,7 +86,7 @@ func New(shutdown chan struct{}) *Handler {
 	h.mux.HandleFunc("/_script.js", h.Script)
 	h.mux.HandleFunc("/_script.js.map", h.Script)
 	//h.mux.HandleFunc("/_info/", h.InfoHandler)
-	//h.mux.HandleFunc("/_ws/", h.SocketHandler)
+	h.mux.HandleFunc("/_ws/", h.Socket)
 	h.mux.HandleFunc("/favicon.ico", h.Icon)
 	h.mux.HandleFunc("/_ah/health", h.HealthCheck)
 	if config.LOCAL {
@@ -83,6 +100,7 @@ func New(shutdown chan struct{}) *Handler {
 }
 
 type Handler struct {
+	Cache      *cache.Cache
 	Fileserver services.Fileserver
 	Database   services.Database
 	Waitgroup  *sync.WaitGroup
@@ -107,6 +125,8 @@ func (h *Handler) sendError(send func(messages.Message), err error) {
 }
 
 func (h *Handler) storeError(ctx context.Context, err error, req *http.Request) {
+
+	fmt.Println(err)
 
 	if err == queue.TooManyItemsQueued {
 		// If the server is getting flooded by a DOS, this will prevent database flooding
