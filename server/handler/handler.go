@@ -23,19 +23,19 @@ import (
 	"github.com/dave/frizz/config"
 	"github.com/dave/frizz/server/assets"
 	"github.com/dave/frizz/server/messages"
-	"github.com/dave/jsgo/server/queue"
 	"github.com/dave/jsgo/server/store"
 	"github.com/dave/patsy"
 	"github.com/dave/patsy/vos"
 	"github.com/dave/services"
-	"github.com/dave/services/cachefileserver"
-	"github.com/dave/services/gcsdatabase"
-	"github.com/dave/services/gcsfileserver"
+	"github.com/dave/services/database/gcsdatabase"
+	"github.com/dave/services/database/localdatabase"
+	"github.com/dave/services/fetcher/gitfetcher"
+	"github.com/dave/services/fetcher/localfetcher"
+	"github.com/dave/services/fileserver/cachefileserver"
+	"github.com/dave/services/fileserver/gcsfileserver"
+	"github.com/dave/services/fileserver/localfileserver"
 	"github.com/dave/services/getter/cache"
-	"github.com/dave/services/gitfetcher"
-	"github.com/dave/services/localdatabase"
-	"github.com/dave/services/localfileserver"
-	"github.com/dave/services/localresolverfetcher"
+	"github.com/dave/services/queue"
 	"github.com/gorilla/websocket"
 	"github.com/shurcooL/httpgzip"
 	"gopkg.in/src-d/go-billy.v4"
@@ -48,7 +48,7 @@ func New(shutdown chan struct{}) *Handler {
 	if config.LOCAL {
 		fileserver = localfileserver.New(config.LocalFileserverTempDir, config.Sites)
 		database = localdatabase.New(config.LocalFileserverTempDir)
-		fetcherResolver := localresolverfetcher.New()
+		fetcherResolver := localfetcher.New()
 		c = cache.New(
 			database,
 			fetcherResolver,
