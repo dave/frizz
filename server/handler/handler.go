@@ -26,16 +26,16 @@ import (
 	"github.com/dave/jsgo/getter/cache"
 	"github.com/dave/jsgo/server/queue"
 	"github.com/dave/jsgo/server/store"
-	"github.com/dave/jsgo/services"
-	"github.com/dave/jsgo/services/cachefileserver"
-	"github.com/dave/jsgo/services/gcsdatabase"
-	"github.com/dave/jsgo/services/gcsfileserver"
-	"github.com/dave/jsgo/services/gitfetcher"
-	"github.com/dave/jsgo/services/localdatabase"
-	"github.com/dave/jsgo/services/localfileserver"
-	"github.com/dave/jsgo/services/localresolverfetcher"
 	"github.com/dave/patsy"
 	"github.com/dave/patsy/vos"
+	"github.com/dave/services"
+	"github.com/dave/services/cachefileserver"
+	"github.com/dave/services/gcsdatabase"
+	"github.com/dave/services/gcsfileserver"
+	"github.com/dave/services/gitfetcher"
+	"github.com/dave/services/localdatabase"
+	"github.com/dave/services/localfileserver"
+	"github.com/dave/services/localresolverfetcher"
 	"github.com/gorilla/websocket"
 	"github.com/shurcooL/httpgzip"
 	"gopkg.in/src-d/go-billy.v4"
@@ -46,9 +46,9 @@ func New(shutdown chan struct{}) *Handler {
 	var fileserver services.Fileserver
 	var database services.Database
 	if config.LOCAL {
-		fileserver = localfileserver.New(config.LocalFileserverTempDir)
+		fileserver = localfileserver.New(config.LocalFileserverTempDir, config.Sites)
 		database = localdatabase.New(config.LocalFileserverTempDir)
-		fetcherResolver := localfetcher.New()
+		fetcherResolver := localresolverfetcher.New()
 		c = cache.New(
 			database,
 			fetcherResolver,
@@ -66,10 +66,17 @@ func New(shutdown chan struct{}) *Handler {
 		}
 
 		database = gcsdatabase.New(datastoreClient)
-		fileserver = gcsfileserver.New(storageClient)
+		fileserver = gcsfileserver.New(storageClient, config.Buckets)
 		c = cache.New(
 			database,
-			gitfetcher.New(cachefileserver.New(1024*1024*1042, 100*1024*1024), fileserver),
+			gitfetcher.New(
+				cachefileserver.New(1024*1024*1042, 100*1024*1024),
+				fileserver,
+				config.GitSaveTimeout,
+				config.GitCloneTimeout,
+				config.GitMaxObjects,
+				config.GitBucket,
+			),
 			nil,
 		)
 	}

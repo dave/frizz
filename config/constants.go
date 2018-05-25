@@ -47,6 +47,9 @@ const (
 	// WebsocketTimeout is the overall timeout for websockets
 	WebsocketTimeout = time.Second * 360
 
+	// GitSaveTimeout is the timeout when saving git repos to GCS
+	GitSaveTimeout = time.Second * 300
+
 	// GitCloneTimeout is the time to wait for a git clone operation
 	GitCloneTimeout = time.Second * 120
 
@@ -66,3 +69,9 @@ const (
 )
 
 var ValidExtensions = [...]string{".go", ".jsgo.html", ".inc.js", ".md"}
+
+var Buckets = []string{PkgBucket, GitBucket}
+
+var Sites = map[string]string{
+	PkgHost: PkgBucket,
+}
