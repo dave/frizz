@@ -24,7 +24,7 @@ import (
 	"github.com/dave/frizz/server/assets"
 	"github.com/dave/frizz/server/messages"
 	"github.com/dave/frizz/server/srcimporter"
-	"github.com/dave/jsgo/getter/get"
+	"github.com/dave/services/getter/get"
 	"github.com/dave/services/session"
 )
 
