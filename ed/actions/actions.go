@@ -2,7 +2,7 @@ package actions
 
 import (
 	"github.com/dave/flux"
-	"github.com/dave/frizz/server/messages"
+	"github.com/dave/services"
 )
 
 type Load struct{}
@@ -13,7 +13,7 @@ type UserChangedSplitSizes struct {
 
 type Inject struct{}
 
-type Send struct{ Message messages.Message }
+type Send struct{ Message services.Message }
 type Dial struct {
 	Open    func() flux.ActionInterface
 	Message func(interface{}) flux.ActionInterface

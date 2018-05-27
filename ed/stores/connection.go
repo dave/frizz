@@ -55,9 +55,9 @@ func (s *ConnectionStore) Handle(payload *flux.Payload) bool {
 		}
 		var url string
 		if config.DEV {
-			url = fmt.Sprintf("ws://localhost:%d/_ws/", config.DevServerPort)
+			url = fmt.Sprintf("ws://localhost:%d/_frizz/", config.DevServerPort)
 		} else {
-			url = "wss://frizz.io/_ws/"
+			url = "wss://frizz.io/_frizz/"
 		}
 		s.app.Debug("Web socket dialing", url)
 		var err error

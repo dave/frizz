@@ -11,10 +11,11 @@ import (
 
 	"github.com/dave/frizz/config"
 	"github.com/dave/frizz/server/messages"
+	"github.com/dave/services"
 	"github.com/gorilla/websocket"
 )
 
-func (h *Handler) Command(ctx context.Context, req *http.Request, send func(message messages.Message), receive chan messages.Message) error {
+func (h *Handler) Command(ctx context.Context, req *http.Request, send func(message services.Message), receive chan services.Message) error {
 	select {
 	case m := <-receive:
 		switch m := m.(type) {
@@ -47,11 +48,11 @@ func (h *Handler) Socket(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var sendWg sync.WaitGroup
-	sendChan := make(chan messages.Message, 256)
-	receive := make(chan messages.Message, 256)
+	sendChan := make(chan services.Message, 256)
+	receive := make(chan services.Message, 256)
 	var finished bool
 
-	send := func(message messages.Message) {
+	send := func(message services.Message) {
 		if finished {
 			return // prevent more messages from being sent after we want to finish
 		}

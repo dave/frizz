@@ -122,12 +122,12 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
-func (h *Handler) sendAndStoreError(ctx context.Context, send func(messages.Message), path string, err error, req *http.Request) {
+func (h *Handler) sendAndStoreError(ctx context.Context, send func(services.Message), path string, err error, req *http.Request) {
 	h.storeError(ctx, err, req)
 	h.sendError(send, err)
 }
 
-func (h *Handler) sendError(send func(messages.Message), err error) {
+func (h *Handler) sendError(send func(services.Message), err error) {
 	send(messages.Error{
 		Message: err.Error(),
 	})

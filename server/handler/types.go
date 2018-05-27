@@ -24,11 +24,12 @@ import (
 	"github.com/dave/frizz/server/assets"
 	"github.com/dave/frizz/server/messages"
 	"github.com/dave/frizz/server/srcimporter"
+	"github.com/dave/services"
 	"github.com/dave/services/getter/get"
 	"github.com/dave/services/session"
 )
 
-func (h *Handler) Types(ctx context.Context, info messages.Types, req *http.Request, send func(message messages.Message), receive chan messages.Message) error {
+func (h *Handler) Types(ctx context.Context, info messages.Types, req *http.Request, send func(message services.Message), receive chan services.Message) error {
 
 	s := session.New(nil, assets.Assets, assets.Archives, h.Fileserver, config.ValidExtensions)
 
@@ -47,8 +48,11 @@ func (h *Handler) Types(ctx context.Context, info messages.Types, req *http.Requ
 		return err
 	}
 
+	// set insecure = true in local mode or it will fail if git repo has git protocol
+	insecure := config.LOCAL
+
 	// Start the download process - just like the "go get" command.
-	if err := g.Get(ctx, info.Path, false, false, false); err != nil {
+	if err := g.Get(ctx, info.Path, false, insecure, false); err != nil {
 		return err
 	}
 
@@ -127,7 +131,7 @@ func (h *Handler) Types(ctx context.Context, info messages.Types, req *http.Requ
 	return nil
 }
 
-func getSource(ctx context.Context, g *get.Getter, s *session.Session, path string, send func(message messages.Message)) (map[string]map[string]string, error) {
+func getSource(ctx context.Context, g *get.Getter, s *session.Session, path string, send func(message services.Message)) (map[string]map[string]string, error) {
 
 	root := filepath.Join("goroot", "src", path)
 	if _, err := assets.Assets.Stat(root); err == nil {
@@ -143,9 +147,12 @@ func getSource(ctx context.Context, g *get.Getter, s *session.Session, path stri
 	// Send a message to the client that downloading step has started.
 	send(messages.Downloading{Starting: true})
 
+	// set insecure = true in local mode or it will fail if git repo has git protocol
+	insecure := config.LOCAL
+
 	// Start the download process - just like the "go get" command.
 	// Don't need to give git hints here because only one package will be downloaded
-	if err := g.Get(ctx, path, false, false, true); err != nil {
+	if err := g.Get(ctx, path, false, insecure, true); err != nil {
 		return nil, err
 	}
 
@@ -202,7 +209,7 @@ func isValidFile(name string) bool {
 }
 
 type downloadWriter struct {
-	send func(messages.Message)
+	send func(services.Message)
 }
 
 func (w downloadWriter) Write(b []byte) (n int, err error) {
