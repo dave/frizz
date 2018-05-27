@@ -37,7 +37,7 @@ func (h *Handler) Types(ctx context.Context, info messages.Types, req *http.Requ
 	if err := gitreq.InitialiseFromHints(ctx, info.Path); err != nil {
 		return err
 	}
-	g := get.New(s, downloadWriter{send: send}, gitreq)
+	g := get.New(s, send, gitreq)
 
 	source, err := getSource(ctx, g, s, info.Path, send)
 	if err != nil {
@@ -206,13 +206,4 @@ func isValidFile(name string) bool {
 		}
 	}
 	return false
-}
-
-type downloadWriter struct {
-	send func(services.Message)
-}
-
-func (w downloadWriter) Write(b []byte) (n int, err error) {
-	w.send(messages.Downloading{Message: strings.TrimSuffix(string(b), "\n")})
-	return len(b), nil
 }

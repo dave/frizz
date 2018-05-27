@@ -30,18 +30,6 @@ func init() {
 	gotypes.RegisterTypes()
 }
 
-type Queueing struct {
-	Position int
-	Done     bool
-}
-type Downloading struct {
-	Starting bool
-	Message  string
-	Done     bool
-}
-type Error struct {
-	Message string
-}
 type Types struct {
 	Path string
 }
