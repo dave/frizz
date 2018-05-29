@@ -1,8 +1,8 @@
 package views
 
 import (
-	"github.com/dave/frizz/ed/actions"
-	"github.com/dave/frizz/ed/stores"
+	"github.com/dave/frizz/actions"
+	"github.com/dave/frizz/stores"
 	"github.com/dave/splitter"
 	"github.com/gopherjs/gopherjs/js"
 	"github.com/gopherjs/vecty"

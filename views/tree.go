@@ -1,25 +1,26 @@
 package views
 
 import (
-	"github.com/dave/frizz/ed/stores"
+	"github.com/dave/frizz/models"
+	"github.com/dave/frizz/stores"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
 	"github.com/gopherjs/vecty/prop"
 )
 
-type Empty struct {
+type Tree struct {
 	vecty.Core
 	app *stores.App
 }
 
-func NewEmpty(app *stores.App) *Empty {
-	v := &Empty{
+func NewTree(app *stores.App) *Tree {
+	v := &Tree{
 		app: app,
 	}
 	return v
 }
 
-func (v *Empty) Mount() {
+func (v *Tree) Mount() {
 	v.app.Watch(v, func(done chan struct{}) {
 		defer close(done)
 		// Things that happen on every refresh
@@ -27,15 +28,18 @@ func (v *Empty) Mount() {
 	// Things that happen once at initialisation
 }
 
-func (v *Empty) Unmount() {
+func (v *Tree) Unmount() {
 	v.app.Delete(v)
 }
 
-func (v *Empty) Render() vecty.ComponentOrHTML {
+func (v *Tree) Render() vecty.ComponentOrHTML {
+	extView := GetExternalViewFunc(models.Id{"github.com/dave/frizz/stores/ext", "View"})
+
 	return elem.Div(
 		vecty.Markup(
-			prop.ID("empty"),
-			vecty.Class("empty"),
+			prop.ID("tree"),
+			vecty.Class("tree"),
 		),
+		extView(v.app, nil),
 	)
 }

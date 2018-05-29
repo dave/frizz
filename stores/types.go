@@ -2,8 +2,8 @@ package stores
 
 import (
 	"github.com/dave/flux"
-	"github.com/dave/frizz/ed/actions"
-	"github.com/dave/frizz/server/messages"
+	"github.com/dave/frizz/actions"
+	"github.com/dave/jsgo/server/frizz/messages"
 )
 
 func NewTypesStore(a *App) *TypesStore {

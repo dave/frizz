@@ -1,11 +1,11 @@
-package main
+package frizz
 
 import (
-	"github.com/dave/frizz/ed/actions"
-	"github.com/dave/frizz/ed/models"
-	"github.com/dave/frizz/ed/stores"
-	_ "github.com/dave/frizz/ed/stores/ext"
-	"github.com/dave/frizz/ed/views"
+	"github.com/dave/frizz/actions"
+	"github.com/dave/frizz/models"
+	"github.com/dave/frizz/stores"
+	_ "github.com/dave/frizz/stores/ext"
+	"github.com/dave/frizz/views"
 	"github.com/gopherjs/vecty"
 	"github.com/vincent-petithory/dataurl"
 	"honnef.co/go/js/dom"
@@ -31,7 +31,7 @@ func run() {
 	app.Init()
 
 	// ext
-	app.RegisterExternalStore(models.Id{"github.com/dave/frizz/ed/stores/ext", "Store"}, app)
+	app.RegisterExternalStore(models.Id{"github.com/dave/frizz/stores/ext", "Store"}, app)
 
 	p := views.NewPage(app)
 	vecty.RenderBody(p)

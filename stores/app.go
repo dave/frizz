@@ -3,18 +3,14 @@ package stores
 import (
 	"fmt"
 	"strconv"
-
-	"honnef.co/go/js/dom"
-
 	"strings"
-
+	"sync"
 	"time"
 
-	"sync"
-
 	"github.com/dave/flux"
-	"github.com/dave/frizz/ed/models"
+	"github.com/dave/frizz/models"
 	"github.com/gopherjs/gopherjs/js"
+	"honnef.co/go/js/dom"
 )
 
 type App struct {

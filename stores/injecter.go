@@ -10,7 +10,7 @@ import (
 	"strconv"
 
 	"github.com/dave/flux"
-	"github.com/dave/frizz/ed/actions"
+	"github.com/dave/frizz/actions"
 	"github.com/dave/play/stores/builderjs"
 	"github.com/gopherjs/gopherjs/compiler"
 	"github.com/gopherjs/gopherjs/js"

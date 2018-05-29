@@ -2,12 +2,12 @@ package ext
 
 import (
 	"github.com/dave/flux"
-	"github.com/dave/frizz/ed/models"
-	"github.com/dave/frizz/ed/stores"
+	"github.com/dave/frizz/models"
+	"github.com/dave/frizz/stores"
 )
 
-var viewId = models.Id{"github.com/dave/frizz/ed/stores/ext", "View"}
-var storeId = models.Id{"github.com/dave/frizz/ed/stores/ext", "Store"}
+var viewId = models.Id{"github.com/dave/frizz/stores/ext", "View"}
+var storeId = models.Id{"github.com/dave/frizz/stores/ext", "Store"}
 
 func init() {
 	stores.RegisterExternalStoreFunc(

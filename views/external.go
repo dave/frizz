@@ -3,8 +3,8 @@ package views
 import (
 	"sync"
 
-	"github.com/dave/frizz/ed/models"
-	"github.com/dave/frizz/ed/stores"
+	"github.com/dave/frizz/models"
+	"github.com/dave/frizz/stores"
 	"github.com/gopherjs/vecty"
 )
 

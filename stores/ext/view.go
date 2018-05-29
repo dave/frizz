@@ -1,8 +1,8 @@
 package ext
 
 import (
-	"github.com/dave/frizz/ed/stores"
-	"github.com/dave/frizz/ed/views"
+	"github.com/dave/frizz/stores"
+	"github.com/dave/frizz/views"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
 )

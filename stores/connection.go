@@ -6,9 +6,10 @@ import (
 	"fmt"
 
 	"github.com/dave/flux"
-	"github.com/dave/frizz/config"
-	"github.com/dave/frizz/ed/actions"
-	"github.com/dave/frizz/server/messages"
+	"github.com/dave/frizz/actions"
+	"github.com/dave/jsgo/config"
+	"github.com/dave/jsgo/server/frizz/messages"
+	"github.com/dave/jsgo/server/servermsg"
 	"github.com/gopherjs/gopherjs/js"
 	"github.com/gopherjs/websocket/websocketjs"
 )
@@ -39,7 +40,7 @@ func (s *ConnectionStore) Handle(payload *flux.Payload) bool {
 			s.app.Fail(errors.New("connection closed"))
 			return true
 		}
-		b, err := messages.Marshal(action.Message)
+		b, _, err := messages.Marshal(action.Message)
 		if err != nil {
 			s.app.Fail(err)
 			return true
@@ -55,7 +56,7 @@ func (s *ConnectionStore) Handle(payload *flux.Payload) bool {
 		}
 		var url string
 		if config.DEV {
-			url = fmt.Sprintf("ws://localhost:%d/_frizz/", config.DevServerPort)
+			url = fmt.Sprintf("ws://%s/_frizz/", config.Host[config.Frizz])
 		} else {
 			url = "wss://frizz.io/_frizz/"
 		}
@@ -82,7 +83,7 @@ func (s *ConnectionStore) Handle(payload *flux.Payload) bool {
 					return
 				}
 				s.app.Debug(fmt.Sprintf("Received %T", m), m)
-				if e, ok := m.(messages.Error); ok {
+				if e, ok := m.(servermsg.Error); ok {
 					s.app.Fail(errors.New(e.Message))
 					return
 				}
