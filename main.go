@@ -1,4 +1,4 @@
-package frizz
+package main
 
 import (
 	"github.com/dave/frizz/actions"

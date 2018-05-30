@@ -1,4 +1,4 @@
-package frizz
+package main
 
 import "testing"
 
