@@ -54,7 +54,7 @@ func (v *Menu) Render() vecty.ComponentOrHTML {
 						vecty.Class("btn", "btn-primary"),
 						event.Click(func(e *vecty.Event) {
 							// TODO: Run button
-							v.app.Dispatch(&actions.TypesStart{})
+							v.app.Dispatch(&actions.GetSourceStart{})
 						}).PreventDefault(),
 					),
 					vecty.Text("..."),

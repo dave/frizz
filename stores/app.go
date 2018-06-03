@@ -22,7 +22,9 @@ type App struct {
 	Page       *PageStore
 	Injector   *InjectorStore
 	Connection *ConnectionStore
+	Source     *SourceStore
 	Types      *TypesStore
+	Tags       *TagsStore
 
 	externalM sync.RWMutex
 	external  map[models.Id]flux.StoreInterface
@@ -39,7 +41,9 @@ func (a *App) Init() {
 	a.Page = NewPageStore(a)
 	a.Injector = NewInjectorStore(a)
 	a.Connection = NewConnectionStore(a)
+	a.Source = NewSourceStore(a)
 	a.Types = NewTypesStore(a)
+	a.Tags = NewTagsStore(a)
 
 	a.Dispatcher = flux.NewDispatcher(
 		// Notifier:
@@ -49,7 +53,9 @@ func (a *App) Init() {
 		a.Page,
 		a.Injector,
 		a.Connection,
+		a.Source,
 		a.Types,
+		a.Tags,
 	)
 }
 
