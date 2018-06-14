@@ -20,12 +20,10 @@ type Dial struct {
 	Close   func() flux.ActionInterface
 }
 
-type GetSourceStart struct{ Path string }
-type GetSourceOpen struct{ Path string }
-type GetSourceMessage struct {
+type GetPackageStart struct{ Path string }
+type GetPackageOpen struct{ Path string }
+type GetPackageMessage struct {
 	Path    string
 	Message interface{}
 }
-type GetSourceClose struct{}
-
-type SourceChanged struct{}
+type GetPackageClose struct{}

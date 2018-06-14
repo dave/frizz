@@ -1,7 +1,6 @@
 package views
 
 import (
-	"github.com/dave/frizz/actions"
 	"github.com/dave/frizz/stores"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
@@ -54,7 +53,6 @@ func (v *Menu) Render() vecty.ComponentOrHTML {
 						vecty.Class("btn", "btn-primary"),
 						event.Click(func(e *vecty.Event) {
 							// TODO: Run button
-							v.app.Dispatch(&actions.GetSourceStart{})
 						}).PreventDefault(),
 					),
 					vecty.Text("..."),

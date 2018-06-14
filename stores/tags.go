@@ -4,23 +4,23 @@ import (
 	"github.com/dave/flux"
 )
 
-func NewTagsStore(a *App) *TagsStore {
-	s := &TagsStore{
+func NewTagStore(a *App) *TagStore {
+	s := &TagStore{
 		app: a,
 	}
 	return s
 }
 
-type TagsStore struct {
+type TagStore struct {
 	app  *App
 	tags []string
 }
 
-func (s *TagsStore) Tags() []string {
+func (s *TagStore) Tags() []string {
 	return s.tags
 }
 
-func (s *TagsStore) Handle(payload *flux.Payload) bool {
+func (s *TagStore) Handle(payload *flux.Payload) bool {
 	switch action := payload.Action.(type) {
 	default:
 		_ = action

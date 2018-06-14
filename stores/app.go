@@ -22,9 +22,8 @@ type App struct {
 	Page       *PageStore
 	Injector   *InjectorStore
 	Connection *ConnectionStore
-	Source     *SourceStore
-	Types      *TypesStore
-	Tags       *TagsStore
+	Packages   *PackageStore
+	Tags       *TagStore
 
 	externalM sync.RWMutex
 	external  map[models.Id]flux.StoreInterface
@@ -41,9 +40,8 @@ func (a *App) Init() {
 	a.Page = NewPageStore(a)
 	a.Injector = NewInjectorStore(a)
 	a.Connection = NewConnectionStore(a)
-	a.Source = NewSourceStore(a)
-	a.Types = NewTypesStore(a)
-	a.Tags = NewTagsStore(a)
+	a.Packages = NewPackageStore(a)
+	a.Tags = NewTagStore(a)
 
 	a.Dispatcher = flux.NewDispatcher(
 		// Notifier:
@@ -53,8 +51,7 @@ func (a *App) Init() {
 		a.Page,
 		a.Injector,
 		a.Connection,
-		a.Source,
-		a.Types,
+		a.Packages,
 		a.Tags,
 	)
 }
@@ -159,4 +156,10 @@ func GetExternalStoreFunc(id models.Id) StoreFunc {
 	externalStoreFuncsM.RLock()
 	defer externalStoreFuncsM.RUnlock()
 	return externalStoreFuncs[id]
+}
+
+func (a *App) HandleGenericStatusMessage(payload *flux.Payload, message interface{}) bool {
+	// TODO: handle things like queue, store etc.
+	//a.Debug(message)
+	return true
 }

@@ -6,12 +6,17 @@ import (
 	"github.com/dave/frizz/stores"
 	_ "github.com/dave/frizz/stores/ext"
 	"github.com/dave/frizz/views"
+	"github.com/dave/jsgo/server/frizz/gotypes"
 	"github.com/gopherjs/vecty"
 	"github.com/vincent-petithory/dataurl"
 	"honnef.co/go/js/dom"
 )
 
 var document = dom.GetWindow().Document().(dom.HTMLDocument)
+
+func init() {
+	gotypes.RegisterTypesStablegob()
+}
 
 func main() {
 	if document.ReadyState() == "loading" {
