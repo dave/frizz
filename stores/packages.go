@@ -15,6 +15,8 @@ import (
 
 	"encoding/gob"
 
+	"sort"
+
 	"github.com/dave/flux"
 	"github.com/dave/frizz/actions"
 	"github.com/dave/frizz/models"
@@ -57,6 +59,34 @@ type PackageStore struct {
 
 	mutex sync.Mutex
 	wait  sync.WaitGroup
+}
+
+func (s *PackageStore) SourcePackages() []string {
+	var paths []string
+	for p := range s.source {
+		paths = append(paths, p)
+	}
+	sort.Strings(paths)
+	return paths
+}
+
+func (s *PackageStore) DisplayPath(path string) string {
+	parts := strings.Split(path, "/")
+	guessed := parts[len(parts)-1]
+	name := s.packageNames[path]
+	suffix := ""
+	if guessed != name && name != "" {
+		suffix = " (" + name + ")"
+	}
+	return path + suffix
+}
+
+func (s *PackageStore) DisplayName(path string) string {
+	if s.packageNames[path] != "" {
+		return s.packageNames[path]
+	}
+	parts := strings.Split(path, "/")
+	return parts[len(parts)-1]
 }
 
 func (s *PackageStore) Path() string {
@@ -123,7 +153,7 @@ func (s *PackageStore) Handle(payload *flux.Payload) bool {
 				return &actions.GetPackageMessage{Path: action.Path, Message: m}
 			},
 			Close: func() flux.ActionInterface {
-				return &actions.GetPackageClose{}
+				return &actions.GetPackageClose{Path: action.Path}
 			},
 		})
 		payload.Notify()
@@ -230,6 +260,7 @@ func (s *PackageStore) Handle(payload *flux.Payload) bool {
 		} else if unchanged > 0 {
 			s.app.LogHidef("%d unchanged", unchanged)
 		}
+		payload.Notify()
 	}
 	return true
 }

@@ -26,4 +26,6 @@ type GetPackageMessage struct {
 	Path    string
 	Message interface{}
 }
-type GetPackageClose struct{}
+type GetPackageClose struct{ Path string }
+
+type UserChangedPackage struct{ Path string }

@@ -2,6 +2,7 @@ package stores
 
 import (
 	"github.com/dave/flux"
+	"github.com/dave/frizz/actions"
 )
 
 func NewPageStore(app *App) *PageStore {
@@ -15,7 +16,12 @@ func NewPageStore(app *App) *PageStore {
 type PageStore struct {
 	app *App
 
-	splitSizes []float64
+	splitSizes     []float64
+	currentPackage string
+}
+
+func (s *PageStore) CurrentPackage() string {
+	return s.currentPackage
 }
 
 func (s *PageStore) SplitSizes() []float64 {
@@ -24,6 +30,10 @@ func (s *PageStore) SplitSizes() []float64 {
 
 func (s *PageStore) Handle(payload *flux.Payload) bool {
 	switch action := payload.Action.(type) {
+	case *actions.GetPackageClose:
+		payload.Wait(s.app.Packages)
+		s.currentPackage = action.Path
+		payload.Notify()
 	default:
 		_ = action
 	}
