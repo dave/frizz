@@ -1,8 +1,8 @@
 package views
 
 import (
-	"github.com/dave/frizz/models"
 	"github.com/dave/frizz/stores"
+	"github.com/dave/frizz/views/treenodes"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
 	"github.com/gopherjs/vecty/prop"
@@ -33,13 +33,21 @@ func (v *Tree) Unmount() {
 }
 
 func (v *Tree) Render() vecty.ComponentOrHTML {
-	extView := GetExternalViewFunc(models.Id{"github.com/dave/frizz/stores/ext", "View"})
+	//extView := GetExternalViewFunc(models.Id{"github.com/dave/frizz/stores/ext", "View"})
 
-	return elem.Div(
+	nodes := []vecty.MarkupOrChild{
 		vecty.Markup(
 			prop.ID("tree"),
 			vecty.Class("tree"),
 		),
-		extView(v.app, nil),
+	}
+	for _, path := range v.app.Packages.SourcePackages() {
+		name := v.app.Packages.PackageName(path)
+		nodes = append(nodes, treenodes.NewPackage(v.app, path, name))
+	}
+
+	return elem.Div(
+		nodes...,
+	//extView(v.app, nil),
 	)
 }

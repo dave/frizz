@@ -61,6 +61,25 @@ type PackageStore struct {
 	wait  sync.WaitGroup
 }
 
+func (s *PackageStore) ObjectsInFile(path, file string) []gotypes.Object {
+	var objects []gotypes.Object
+	for _, o := range s.objects[path][file] {
+		objects = append(objects, o)
+	}
+	// all in same file -> don't need to compare package
+	sort.Slice(objects, func(i, j int) bool { return objects[i].Id().Name < objects[j].Id().Name })
+	return objects
+}
+
+func (s *PackageStore) SourceFiles(path string) []string {
+	var files []string
+	for f := range s.source[path] {
+		files = append(files, f)
+	}
+	sort.Strings(files)
+	return files
+}
+
 func (s *PackageStore) SourcePackages() []string {
 	var paths []string
 	for p := range s.source {
@@ -68,6 +87,10 @@ func (s *PackageStore) SourcePackages() []string {
 	}
 	sort.Strings(paths)
 	return paths
+}
+
+func (s *PackageStore) PackageName(path string) string {
+	return s.packageNames[path]
 }
 
 func (s *PackageStore) DisplayPath(path string) string {
