@@ -50,14 +50,12 @@ func (m *Node) Build() vecty.ComponentOrHTML {
 	}
 	children = append(children, m.children...)
 
-	return elem.Div(
-		vecty.Markup(
-			vecty.Class("tree-node"),
-		),
+	return elem.ListItem(
+		//Plus(),
 		elem.Div(
 			body...,
 		),
-		elem.Div(
+		elem.UnorderedList(
 			children...,
 		),
 	)

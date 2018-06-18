@@ -24,6 +24,7 @@ type App struct {
 	Connection *ConnectionStore
 	Packages   *PackageStore
 	Tags       *TagStore
+	Data       *DataStore
 
 	externalM sync.RWMutex
 	external  map[models.Id]flux.StoreInterface
@@ -42,6 +43,7 @@ func (a *App) Init() {
 	a.Connection = NewConnectionStore(a)
 	a.Packages = NewPackageStore(a)
 	a.Tags = NewTagStore(a)
+	a.Data = NewDataStore(a)
 
 	a.Dispatcher = flux.NewDispatcher(
 		// Notifier:
@@ -53,6 +55,7 @@ func (a *App) Init() {
 		a.Connection,
 		a.Packages,
 		a.Tags,
+		a.Data,
 	)
 }
 

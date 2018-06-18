@@ -107,7 +107,7 @@ func (v *Menu) renderPackageDropdown() *vecty.HTML {
 			vecty.Property("aria-labelledby", "packageDropdown"),
 		),
 	)
-	for _, path := range v.app.Packages.SourcePackages() {
+	for _, path := range v.app.Packages.SortedSourcePackages() {
 		path := path
 		packageItems = append(packageItems,
 			elem.Anchor(
@@ -169,7 +169,7 @@ func (v *Menu) renderPackageDropdown() *vecty.HTML {
 	)
 
 	classes := vecty.Class("nav-item", "dropdown", "d-none")
-	if len(v.app.Packages.SourcePackages()) > 0 {
+	if len(v.app.Packages.SortedSourcePackages()) > 0 {
 		classes = vecty.Class("nav-item", "dropdown")
 	}
 

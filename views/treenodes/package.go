@@ -23,7 +23,7 @@ func NewPackage(app *stores.App, path, name string) *Package {
 func (v *Package) Render() vecty.ComponentOrHTML {
 
 	var children []vecty.MarkupOrChild
-	for _, file := range v.app.Packages.SourceFiles(v.path) {
+	for _, file := range v.app.Packages.SortedSourceFiles(v.path) {
 		children = append(children, NewFile(v.app, v.path, file))
 	}
 

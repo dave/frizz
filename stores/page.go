@@ -8,7 +8,7 @@ import (
 func NewPageStore(app *App) *PageStore {
 	s := &PageStore{
 		app:        app,
-		splitSizes: []float64{20, 80},
+		splitSizes: []float64{30, 70},
 	}
 	return s
 }

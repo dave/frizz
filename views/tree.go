@@ -34,6 +34,7 @@ func (v *Tree) Unmount() {
 
 func (v *Tree) Render() vecty.ComponentOrHTML {
 	//extView := GetExternalViewFunc(models.Id{"github.com/dave/frizz/stores/ext", "View"})
+	//extView(v.app, nil),
 
 	nodes := []vecty.MarkupOrChild{
 		vecty.Markup(
@@ -41,13 +42,12 @@ func (v *Tree) Render() vecty.ComponentOrHTML {
 			vecty.Class("tree"),
 		),
 	}
-	for _, path := range v.app.Packages.SourcePackages() {
+	for _, path := range v.app.Packages.SortedSourcePackages() {
 		name := v.app.Packages.PackageName(path)
 		nodes = append(nodes, treenodes.NewPackage(v.app, path, name))
 	}
 
-	return elem.Div(
+	return elem.UnorderedList(
 		nodes...,
-	//extView(v.app, nil),
 	)
 }

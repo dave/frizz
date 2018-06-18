@@ -24,14 +24,12 @@ func NewFile(app *stores.App, path, file string) *File {
 func (v *File) Render() vecty.ComponentOrHTML {
 
 	var children []vecty.MarkupOrChild
-	for _, o := range v.app.Packages.ObjectsInFile(v.path, v.file) {
+	for _, o := range v.app.Packages.SortedObjectsInFile(v.path, v.file) {
 		switch o := o.(type) {
-		case gotypes.TypeName:
-			children = append(children, NewTypeName(v.app, v.path, v.file, o.Id().Name))
-		case gotypes.Var:
-			children = append(children, NewVar(v.app, v.path, v.file, o.Id().Name))
-		case gotypes.Const:
-			children = append(children, NewConst(v.app, v.path, v.file, o.Id().Name))
+		case *gotypes.TypeName:
+			//children = append(children, NewTypeName(v.app, v.path, v.file, o.Id().Name))
+		case *gotypes.Var, *gotypes.Const:
+			children = append(children, NewDecl(v.app, v.path, v.file, o.Id().Name))
 			// TODO: more
 		}
 	}
