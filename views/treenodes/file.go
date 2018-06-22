@@ -29,8 +29,9 @@ func (v *File) Render() vecty.ComponentOrHTML {
 		case *gotypes.TypeName:
 			//children = append(children, NewTypeName(v.app, v.path, v.file, o.Id().Name))
 		case *gotypes.Var, *gotypes.Const:
-			data := v.app.Data.Expr(v.app.Packages.ObjectsInFile(v.path, v.file)[o.Object().Name])
-			children = append(children, NewObj(v.app, v.path, v.file, o.Object(), data))
+			ob := o.Object()
+			data := v.app.Data.Expr(v.app.Packages.ObjectsInFile(v.path, v.file)[ob.Name])
+			children = append(children, NewObj(v.app, v.path, v.file, ob.Name, ob.Type, data))
 		}
 	}
 

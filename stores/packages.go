@@ -78,27 +78,37 @@ func (s *PackageStore) ObjectsInFile(path, file string) map[string]gotypes.Objec
 	return objects
 }
 
-// ResolveType resolves Reference, Named, Pointer or Interface types to their underlying types. Always
-// returns one of: Basic, Array, Slice, Struct, Tuple, Signature, Map, or Chan. Returns nil if the type
-// cannot be resolved (e.g. a nil interface).
+// ResolveType resolves Reference, Named, Pointer or Interface types to their underlying types. Tries
+// to return one of: Basic, Array, Slice, Struct, Tuple, Signature, Map, or Chan. If the interface cannot
+// be resolved or data == nil, it may return *Interface. If the reference can't be resolved, it may
+// return *Reference.
 func (s *PackageStore) ResolveType(t gotypes.Type, path, file string, data ast.Expr) gotypes.Type {
 	var depth int
 	for {
 		if depth > MaxResolveTypeDepth {
+			// sanity check for recursive types (shouldn't happen?)
 			panic("past max depth in ResolveType")
 		}
 		depth++
-		switch tt := t.(type) {
+		var resolved gotypes.Type
+		switch t := t.(type) {
 		case *gotypes.Reference:
-			t = s.resolveReference(tt)
+			resolved = s.resolveReference(t)
 		case *gotypes.Named:
-			t = s.resolveNamed(tt)
+			resolved = s.resolveNamed(t)
 		case *gotypes.Pointer:
-			t = s.resolvePointer(tt)
+			resolved = s.resolvePointer(t)
 		case *gotypes.Interface:
-			t = s.resolveTypeFromExpr(path, file, data)
+			resolved = s.resolveTypeFromExpr(path, file, data)
 		default:
 			return t
+		}
+		if resolved == nil {
+			// if we don't successfully manage to resolve a type, return the previous type
+			return t
+		} else {
+			// if we resolved the type, recurse
+			t = resolved
 		}
 	}
 }
@@ -122,6 +132,9 @@ func (s *PackageStore) resolveReference(t *gotypes.Reference) gotypes.Type {
 }
 
 func (s *PackageStore) resolveTypeFromExpr(path, file string, e ast.Expr) gotypes.Type {
+	if e == nil {
+		return nil
+	}
 	switch e := e.(type) {
 	case *ast.BadExpr:
 	case *ast.Ident:
