@@ -179,7 +179,7 @@ func (s *PackageStore) SortedObjectsInFile(path, file string) []gotypes.Object {
 		objects = append(objects, o)
 	}
 	// all in same file -> don't need to compare package
-	sort.Slice(objects, func(i, j int) bool { return objects[i].Id().Name < objects[j].Id().Name })
+	sort.Slice(objects, func(i, j int) bool { return objects[i].Object().Name < objects[j].Object().Name })
 	return objects
 }
 

@@ -10,43 +10,34 @@ import (
 	"github.com/gopherjs/vecty"
 )
 
-// Decl is a gotypes.Var or gotypes.Const
-type Decl struct {
+type Obj struct {
 	*Node
-	path, file, name string
+	path, file string
+	obj        gotypes.Obj
+	data       ast.Expr
 }
 
-func NewDecl(app *stores.App, path, file, name string) *Decl {
-	return &Decl{
+func NewObj(app *stores.App, path, file string, obj gotypes.Obj, data ast.Expr) *Obj {
+	return &Obj{
 		Node: &Node{
 			app: app,
 		},
 		path: path,
 		file: file,
-		name: name,
+		obj:  obj,
+		data: data,
 	}
 }
 
-func (v *Decl) Render() vecty.ComponentOrHTML {
+func (v *Obj) Render() vecty.ComponentOrHTML {
 
-	ob := v.app.Packages.ObjectsInFile(v.path, v.file)[v.name]
-	data := v.app.Data.Expr(ob)
+	typ := v.app.Packages.ResolveType(v.obj.Type, v.path, v.file, v.data)
 
-	// determine type
-	var typ gotypes.Type
-	switch ob := ob.(type) {
-	case *gotypes.Var:
-		typ = ob.Type
-	case *gotypes.Const:
-		typ = ob.Type
-	}
-
-	typ = v.app.Packages.ResolveType(typ, v.path, v.file, data)
-
-	children := childrenForNode(v.app, v.path, v.file, typ, data)
+	// childrenForNode also does ResolveType but will be a noop if already done.
+	children := childrenForNode(v.app, v.path, v.file, typ, v.data)
 
 	return v.Body(
-		vecty.Text(v.name + fmt.Sprintf(" (%T)", typ)),
+		vecty.Text(v.obj.Name + fmt.Sprintf(" (%T)", typ)),
 	).Children(
 		children...,
 	).Build()
@@ -67,14 +58,20 @@ func childrenForNode(app *stores.App, path, file string, typ gotypes.Type, data 
 					switch key := el.Key.(type) {
 					case *ast.Ident:
 						name = key.Name
+					default:
+						panic(fmt.Sprintf("TODO: key of type %T\n", el.Key))
 					}
 					fieldData[name] = el.Value
+				default:
+					panic(fmt.Sprintf("TODO: el of type %T\n", el))
 				}
 			}
+		default:
+			panic(fmt.Sprintf("TODO: data of type %T\n", data))
 		}
 		for _, field := range typ.Fields {
 			dataItem := fieldData[field.Name]
-			children = append(children, NewVar(app, path, file, field, dataItem))
+			children = append(children, NewObj(app, path, file, field.Obj, dataItem))
 		}
 	}
 	return children

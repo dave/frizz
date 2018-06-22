@@ -5,6 +5,10 @@ import (
 	"github.com/gopherjs/vecty"
 )
 
+/*
+	Not used right now - don't want to show types in the tree.
+*/
+
 type TypeName struct {
 	*Node
 	path, file, name string
