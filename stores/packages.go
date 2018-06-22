@@ -85,6 +85,8 @@ func (s *PackageStore) ResolveType(t gotypes.Type) gotypes.Type {
 			t = s.types[tt.Path][tt.Name]
 		case *gotypes.Named:
 			t = tt.Type
+		case *gotypes.Pointer:
+			t = tt.Elem
 		default:
 			return t
 		}

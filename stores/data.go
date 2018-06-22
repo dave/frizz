@@ -94,13 +94,15 @@ func (s *DataStore) Handle(payload *flux.Payload) bool {
 						spec := spec.(*ast.ValueSpec) // var and const always have *ast.ValueSpec specs
 						for i := 0; i < len(spec.Names); i++ {
 							name := spec.Names[i].Name
-							value := spec.Values[i]
 							// look up name
 							ob, ok := decls[name]
 							if !ok {
 								continue
 							}
-							s.data[ob] = value
+							if len(spec.Values) > 0 {
+								// if just `var Foo string`, spec.Values == nil
+								s.data[ob] = spec.Values[i]
+							}
 							s.app.Log(name)
 							/*
 								{
