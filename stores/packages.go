@@ -78,27 +78,55 @@ func (s *PackageStore) ObjectsInFile(path, file string) map[string]gotypes.Objec
 	return objects
 }
 
-func (s *PackageStore) ResolveType(t gotypes.Type) gotypes.Type {
+// ResolveType resolves Reference, Named, Pointer or Interface types to their underlying types. Always
+// returns one of: Basic, Array, Slice, Struct, Tuple, Signature, Map, or Chan. Returns nil if the type
+// cannot be resolved (e.g. a nil interface).
+func (s *PackageStore) ResolveType(t gotypes.Type, path, file string, data ast.Expr) gotypes.Type {
+	var depth int
 	for {
+		if depth > MaxResolveTypeDepth {
+			panic("past max depth in ResolveType")
+		}
+		depth++
 		switch tt := t.(type) {
 		case *gotypes.Reference:
-			t = s.types[tt.Path][tt.Name]
+			t = s.resolveReference(tt)
 		case *gotypes.Named:
-			t = tt.Type
+			t = s.resolveNamed(tt)
 		case *gotypes.Pointer:
-			t = tt.Elem
+			t = s.resolvePointer(tt)
+		case *gotypes.Interface:
+			t = s.resolveTypeFromExpr(path, file, data)
 		default:
 			return t
 		}
 	}
 }
 
-func (s *PackageStore) ResolveTypeFromExpr(path, file string, e ast.Expr) gotypes.Type {
+const MaxResolveTypeDepth = 100
+
+func (s *PackageStore) resolveNamed(t *gotypes.Named) gotypes.Type {
+	return t.Type
+}
+
+func (s *PackageStore) resolvePointer(t *gotypes.Pointer) gotypes.Type {
+	return t.Elem
+}
+
+func (s *PackageStore) resolveReference(t *gotypes.Reference) gotypes.Type {
+	pkg, ok := s.types[t.Path]
+	if !ok {
+		return nil
+	}
+	return pkg[t.Name]
+}
+
+func (s *PackageStore) resolveTypeFromExpr(path, file string, e ast.Expr) gotypes.Type {
 	switch e := e.(type) {
 	case *ast.BadExpr:
 	case *ast.Ident:
 		// TODO: Search packages that are dot-imported?
-		return s.ResolveType(&gotypes.Reference{Identifier: gotypes.Identifier{Path: path, Name: e.Name}})
+		return s.resolveReference(&gotypes.Reference{Identifier: gotypes.Identifier{Path: path, Name: e.Name}})
 	case *ast.Ellipsis:
 	case *ast.BasicLit:
 		switch e.Kind {
@@ -115,12 +143,12 @@ func (s *PackageStore) ResolveTypeFromExpr(path, file string, e ast.Expr) gotype
 		}
 	case *ast.FuncLit:
 	case *ast.CompositeLit:
-		return s.ResolveTypeFromExpr(path, file, e.Type)
+		return s.resolveTypeFromExpr(path, file, e.Type)
 	case *ast.ParenExpr:
 	case *ast.SelectorExpr:
 		if x, ok := e.X.(*ast.Ident); ok && x.Obj == nil {
 			// if X is an ident and Obj == nil -> selector is of the form <path>.<Name>
-			return s.ResolveType(gotypes.Reference{
+			return s.resolveReference(&gotypes.Reference{
 				Identifier: gotypes.Identifier{
 					Path: s.app.Data.Import(path, file, x.Name),
 					Name: e.Sel.Name,

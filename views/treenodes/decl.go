@@ -41,12 +41,7 @@ func (v *Decl) Render() vecty.ComponentOrHTML {
 		typ = ob.Type
 	}
 
-	typ = v.app.Packages.ResolveType(typ)
-
-	if _, ok := typ.(*gotypes.Interface); ok {
-		// If the type of the decl is an interface, try to extract the actual type from the data
-		typ = v.app.Packages.ResolveTypeFromExpr(v.path, v.file, data)
-	}
+	typ = v.app.Packages.ResolveType(typ, v.path, v.file, data)
 
 	children := childrenForNode(v.app, v.path, v.file, typ, data)
 

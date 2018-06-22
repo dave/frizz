@@ -31,13 +31,9 @@ func NewVar(app *stores.App, path, file string, tvar *gotypes.Var, data ast.Expr
 
 func (v *Var) Render() vecty.ComponentOrHTML {
 
-	typ := v.app.Packages.ResolveType(v.tvar.Type)
+	typ := v.app.Packages.ResolveType(v.tvar.Type, v.path, v.file, v.data)
 
-	if _, ok := typ.(*gotypes.Interface); ok {
-		// If the type of the decl is an interface, try to extract the actual type from the data
-		typ = v.app.Packages.ResolveTypeFromExpr(v.path, v.file, v.data)
-	}
-
+	// childrenForNode also does ResolveType but will be a noop if already done.
 	children := childrenForNode(v.app, v.path, v.file, typ, v.data)
 
 	return v.Body(
