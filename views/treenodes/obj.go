@@ -5,9 +5,13 @@ import (
 
 	"go/ast"
 
+	"github.com/dave/frizz/actions"
 	"github.com/dave/frizz/stores"
 	"github.com/dave/jsgo/server/frizz/gotypes"
 	"github.com/gopherjs/vecty"
+	"github.com/gopherjs/vecty/elem"
+	"github.com/gopherjs/vecty/event"
+	"github.com/gopherjs/vecty/prop"
 )
 
 type Obj struct {
@@ -47,8 +51,22 @@ func (v *Obj) Render() vecty.ComponentOrHTML {
 	}
 
 	return v.Body(
-		//vecty.Text(v.name + fmt.Sprintf(" (%T)", typ)),
-		vecty.Text(v.name + data),
+		elem.Anchor(
+			vecty.Markup(
+				prop.Href(""),
+				event.Click(func(e *vecty.Event) {
+					v.app.Dispatch(&actions.UserClickedNode{
+						Path: v.path,
+						File: v.file,
+						Name: v.name,
+						Type: v.typ,
+						Data: v.data,
+					})
+				}).PreventDefault(),
+			),
+			vecty.Text(v.name),
+		),
+		vecty.Text(data),
 	).Children(
 		children...,
 	).Build()

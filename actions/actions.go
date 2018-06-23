@@ -1,7 +1,10 @@
 package actions
 
 import (
+	"go/ast"
+
 	"github.com/dave/flux"
+	"github.com/dave/jsgo/server/frizz/gotypes"
 	"github.com/dave/services"
 )
 
@@ -29,3 +32,9 @@ type GetPackageMessage struct {
 type GetPackageClose struct{ Path string }
 
 type UserChangedPackage struct{ Path string }
+
+type UserClickedNode struct {
+	Path, File, Name string
+	Type             gotypes.Type
+	Data             ast.Expr
+}

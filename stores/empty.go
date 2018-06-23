@@ -4,15 +4,15 @@ import (
 	"github.com/dave/flux"
 )
 
+type EmptyStore struct {
+	app *App
+}
+
 func NewEmptyStore(a *App) *EmptyStore {
 	s := &EmptyStore{
 		app: a,
 	}
 	return s
-}
-
-type EmptyStore struct {
-	app *App
 }
 
 func (s *EmptyStore) Handle(payload *flux.Payload) bool {

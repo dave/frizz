@@ -164,6 +164,7 @@ func (v *Page) renderContent() *vecty.HTML {
 			vecty.Markup(
 				prop.ID("content-holder"),
 			),
+			NewEditor(v.app),
 		),
 	)
 }
