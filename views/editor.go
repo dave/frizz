@@ -35,7 +35,7 @@ func (v *Editor) Unmount() {
 
 func (v *Editor) Render() vecty.ComponentOrHTML {
 
-	if v.app.Editor.Path() == "" {
+	if v.app.Editor.Root() == nil {
 		return elem.Div()
 	}
 
@@ -44,9 +44,9 @@ func (v *Editor) Render() vecty.ComponentOrHTML {
 	case *gotypes.Basic:
 		switch t.Kind {
 		case gotypes.Int:
-			editor = views.NewInt(v.app, v.app.Editor.Data())
+			editor = views.NewInt(v.app, v.app.Editor.Root(), v.app.Editor.Data())
 		case gotypes.String:
-			editor = views.NewString(v.app, v.app.Editor.Data())
+			editor = views.NewString(v.app, v.app.Editor.Root(), v.app.Editor.Data())
 		}
 	}
 

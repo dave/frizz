@@ -2,24 +2,29 @@ package views
 
 import (
 	"go/ast"
-
 	"strconv"
 
+	"github.com/dave/frizz/actions"
 	"github.com/dave/frizz/stores"
+	"github.com/dave/jsgo/server/frizz/gotypes"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
+	"github.com/gopherjs/vecty/event"
 	"github.com/gopherjs/vecty/prop"
+	"golang.org/x/tools/go/ast/astutil"
 )
 
 type String struct {
 	vecty.Core
+	root gotypes.Object
 	app  *stores.App
 	Data ast.Expr `vecty:"prop"`
 }
 
-func NewString(app *stores.App, data ast.Expr) *String {
+func NewString(app *stores.App, root gotypes.Object, data ast.Expr) *String {
 	v := &String{
 		app:  app,
+		root: root,
 		Data: data,
 	}
 	return v
@@ -73,6 +78,18 @@ func (v *String) Render() vecty.ComponentOrHTML {
 			vecty.Markup(
 				prop.Type(prop.TypeSubmit),
 				vecty.Class("btn", "btn-primary"),
+				event.Click(func(e *vecty.Event) {
+					v.app.Dispatch(&actions.UserMutatedValue{
+						Root: v.root,
+						Change: func(c *astutil.Cursor) bool {
+							if c.Node() != v.Data {
+								return true
+							}
+							c.Node().(*ast.BasicLit).Value = `"FOO"`
+							return true
+						},
+					})
+				}).PreventDefault(),
 			),
 			vecty.Text("Submit"),
 		),

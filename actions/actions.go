@@ -6,6 +6,7 @@ import (
 	"github.com/dave/flux"
 	"github.com/dave/jsgo/server/frizz/gotypes"
 	"github.com/dave/services"
+	"golang.org/x/tools/go/ast/astutil"
 )
 
 type Load struct{}
@@ -34,7 +35,13 @@ type GetPackageClose struct{ Path string }
 type UserChangedPackage struct{ Path string }
 
 type UserClickedNode struct {
-	Path, File, Name string
-	Type             gotypes.Type
-	Data             ast.Expr
+	Root gotypes.Object
+	Name string
+	Type gotypes.Type
+	Data ast.Expr
+}
+
+type UserMutatedValue struct {
+	Root   gotypes.Object
+	Change astutil.ApplyFunc
 }

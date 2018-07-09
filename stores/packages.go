@@ -41,6 +41,7 @@ func NewPackageStore(a *App) *PackageStore {
 		objects:       map[string]map[string]map[string]gotypes.Object{},
 		types:         map[string]map[string]gotypes.Type{},
 		packageNames:  map[string]string{},
+		fileLookup:    map[gotypes.Object]string{},
 	}
 	return s
 }
@@ -59,6 +60,7 @@ type PackageStore struct {
 	types   map[string]map[string]gotypes.Type              // package -> name -> type
 
 	packageNames map[string]string
+	fileLookup   map[gotypes.Object]string
 
 	index *messages.PackageIndex
 
@@ -371,10 +373,16 @@ func (s *PackageStore) Handle(payload *flux.Payload) bool {
 					defer s.mutex.Unlock()
 					s.packageNames[op.Path] = op.Name
 					s.objects[op.Path] = op.Objects
-					// types
+
 					s.types[op.Path] = map[string]gotypes.Type{}
-					for _, objects := range op.Objects {
+
+					for file, objects := range op.Objects {
 						for name, object := range objects {
+
+							// add to file lookup
+							s.fileLookup[object] = file
+
+							// if type, add to types
 							tn, ok := object.(*gotypes.TypeName)
 							if !ok {
 								continue

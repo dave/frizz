@@ -9,10 +9,11 @@ import (
 )
 
 type EditorStore struct {
-	app              *App
-	path, file, name string // name is not always a top-level name in file (can be deeply nested).
-	typ              gotypes.Type
-	data             ast.Expr
+	app  *App
+	root gotypes.Object
+	name string // name is not always a top-level name in file (can be deeply nested).
+	typ  gotypes.Type
+	data ast.Expr
 }
 
 func NewEditorStore(a *App) *EditorStore {
@@ -22,12 +23,8 @@ func NewEditorStore(a *App) *EditorStore {
 	return s
 }
 
-func (s *EditorStore) Path() string {
-	return s.path
-}
-
-func (s *EditorStore) File() string {
-	return s.file
+func (s *EditorStore) Root() gotypes.Object {
+	return s.root
 }
 
 func (s *EditorStore) Name() string {
@@ -45,8 +42,7 @@ func (s *EditorStore) Data() ast.Expr {
 func (s *EditorStore) Handle(payload *flux.Payload) bool {
 	switch action := payload.Action.(type) {
 	case *actions.UserClickedNode:
-		s.path = action.Path
-		s.file = action.File
+		s.root = action.Root
 		s.name = action.Name
 		s.typ = action.Type
 		s.data = action.Data

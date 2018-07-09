@@ -31,7 +31,7 @@ func (v *File) Render() vecty.ComponentOrHTML {
 		case *gotypes.Var, *gotypes.Const:
 			ob := o.Object()
 			data := v.app.Data.Expr(v.app.Packages.ObjectsInFile(v.path, v.file)[ob.Name])
-			children = append(children, NewObj(v.app, v.path, v.file, ob.Name, ob.Type, data))
+			children = append(children, NewObj(v.app, v.path, v.file, o, ob.Name, ob.Type, data))
 		}
 	}
 

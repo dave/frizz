@@ -2,29 +2,30 @@ package stores
 
 import (
 	"go/ast"
-	"strconv"
-
 	"go/parser"
 	"go/token"
+	"strconv"
 
 	"github.com/dave/flux"
 	"github.com/dave/frizz/actions"
 	"github.com/dave/jsgo/server/frizz/gotypes"
 )
 
+type DataStore struct {
+	app     *App
+	fset    *token.FileSet
+	data    map[gotypes.Object]ast.Expr
+	imports map[string]map[string]map[string]string // package -> file -> alias -> import path
+}
+
 func NewDataStore(a *App) *DataStore {
 	s := &DataStore{
 		app:     a,
+		fset:    token.NewFileSet(),
 		data:    map[gotypes.Object]ast.Expr{},
 		imports: map[string]map[string]map[string]string{},
 	}
 	return s
-}
-
-type DataStore struct {
-	app     *App
-	data    map[gotypes.Object]ast.Expr
-	imports map[string]map[string]map[string]string // package -> file -> alias -> import path
 }
 
 func (s *DataStore) Expr(ob gotypes.Object) ast.Expr {
@@ -37,10 +38,27 @@ func (s *DataStore) Import(path, file, alias string) string {
 
 func (s *DataStore) Handle(payload *flux.Payload) bool {
 	switch action := payload.Action.(type) {
+	case *actions.UserMutatedValue:
+
+		panic("not implemented")
+		/*
+			result := astutil.Apply(s.data[action.Root], action.Change, nil)
+
+			if result == nil {
+				fmt.Println("nil ast result")
+			} else {
+				buf := &bytes.Buffer{}
+				if err := format.Node(buf, s.fset, result); err != nil {
+					s.app.Fail(err)
+					return true
+				}
+				fmt.Println(buf.String())
+			}
+		*/
+
 	case *actions.GetPackageClose:
 		payload.Wait(s.app.Packages)
 		s.app.Log("scanning data")
-		fset := token.NewFileSet()
 		s.imports[action.Path] = map[string]map[string]string{}
 		for fname, contents := range s.app.Packages.Source()[action.Path] {
 
@@ -57,7 +75,7 @@ func (s *DataStore) Handle(payload *flux.Payload) bool {
 				continue
 			}
 
-			f, err := parser.ParseFile(fset, fname, contents, parser.ParseComments)
+			f, err := parser.ParseFile(s.fset, fname, contents, parser.ParseComments)
 			if err != nil {
 				s.app.Fail(err)
 				return true

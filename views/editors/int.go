@@ -4,6 +4,7 @@ import (
 	"go/ast"
 
 	"github.com/dave/frizz/stores"
+	"github.com/dave/jsgo/server/frizz/gotypes"
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
 	"github.com/gopherjs/vecty/prop"
@@ -11,13 +12,15 @@ import (
 
 type Int struct {
 	vecty.Core
+	root gotypes.Object
 	app  *stores.App
 	Data ast.Expr `vecty:"prop"`
 }
 
-func NewInt(app *stores.App, data ast.Expr) *Int {
+func NewInt(app *stores.App, root gotypes.Object, data ast.Expr) *Int {
 	v := &Int{
 		app:  app,
+		root: root,
 		Data: data,
 	}
 	return v
