@@ -1,8 +1,7 @@
 package stores
 
 import (
-	"go/ast"
-
+	"github.com/dave/dst"
 	"github.com/dave/flux"
 	"github.com/dave/frizz/actions"
 	"github.com/dave/jsgo/server/frizz/gotypes"
@@ -13,7 +12,7 @@ type EditorStore struct {
 	root gotypes.Object
 	name string // name is not always a top-level name in file (can be deeply nested).
 	typ  gotypes.Type
-	data ast.Expr
+	data dst.Expr
 }
 
 func NewEditorStore(a *App) *EditorStore {
@@ -35,7 +34,7 @@ func (s *EditorStore) Type() gotypes.Type {
 	return s.typ
 }
 
-func (s *EditorStore) Data() ast.Expr {
+func (s *EditorStore) Data() dst.Expr {
 	return s.data
 }
 

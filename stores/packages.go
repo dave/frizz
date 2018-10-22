@@ -1,24 +1,18 @@
 package stores
 
 import (
+	"encoding/gob"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"go/token"
 	"net/http"
+	"sort"
+	"strings"
 	"sync"
 
+	"github.com/dave/dst"
 	"honnef.co/go/js/dom"
-
-	"fmt"
-
-	"encoding/json"
-
-	"strings"
-
-	"encoding/gob"
-
-	"sort"
-
-	"go/ast"
-	"go/token"
 
 	"github.com/dave/flux"
 	"github.com/dave/frizz/actions"
@@ -84,7 +78,7 @@ func (s *PackageStore) ObjectsInFile(path, file string) map[string]gotypes.Objec
 // to return one of: Basic, Array, Slice, Struct, Tuple, Signature, Map, or Chan. If the interface cannot
 // be resolved or data == nil, it may return *Interface. If the reference can't be resolved, it may
 // return *Reference.
-func (s *PackageStore) ResolveType(t gotypes.Type, path, file string, data ast.Expr) gotypes.Type {
+func (s *PackageStore) ResolveType(t gotypes.Type, path, file string, data dst.Expr) gotypes.Type {
 	var depth int
 	for {
 		if depth > MaxResolveTypeDepth {
@@ -133,17 +127,17 @@ func (s *PackageStore) resolveReference(t *gotypes.Reference) gotypes.Type {
 	return pkg[t.Name]
 }
 
-func (s *PackageStore) resolveTypeFromExpr(path, file string, e ast.Expr) gotypes.Type {
+func (s *PackageStore) resolveTypeFromExpr(path, file string, e dst.Expr) gotypes.Type {
 	if e == nil {
 		return nil
 	}
 	switch e := e.(type) {
-	case *ast.BadExpr:
-	case *ast.Ident:
+	case *dst.BadExpr:
+	case *dst.Ident:
 		// TODO: Search packages that are dot-imported?
 		return s.resolveReference(&gotypes.Reference{Identifier: gotypes.Identifier{Path: path, Name: e.Name}})
-	case *ast.Ellipsis:
-	case *ast.BasicLit:
+	case *dst.Ellipsis:
+	case *dst.BasicLit:
 		switch e.Kind {
 		case token.INT:
 			return gotypes.Typ[gotypes.UntypedInt]
@@ -156,12 +150,12 @@ func (s *PackageStore) resolveTypeFromExpr(path, file string, e ast.Expr) gotype
 		case token.STRING:
 			return gotypes.Typ[gotypes.UntypedString]
 		}
-	case *ast.FuncLit:
-	case *ast.CompositeLit:
+	case *dst.FuncLit:
+	case *dst.CompositeLit:
 		return s.resolveTypeFromExpr(path, file, e.Type)
-	case *ast.ParenExpr:
-	case *ast.SelectorExpr:
-		if x, ok := e.X.(*ast.Ident); ok && x.Obj == nil {
+	case *dst.ParenExpr:
+	case *dst.SelectorExpr:
+		if x, ok := e.X.(*dst.Ident); ok && x.Obj == nil {
 			// if X is an ident and Obj == nil -> selector is of the form <path>.<Name>
 			return s.resolveReference(&gotypes.Reference{
 				Identifier: gotypes.Identifier{
@@ -170,20 +164,20 @@ func (s *PackageStore) resolveTypeFromExpr(path, file string, e ast.Expr) gotype
 				},
 			})
 		}
-	case *ast.IndexExpr:
-	case *ast.SliceExpr:
-	case *ast.TypeAssertExpr:
-	case *ast.CallExpr:
-	case *ast.StarExpr:
-	case *ast.UnaryExpr:
-	case *ast.BinaryExpr:
-	case *ast.KeyValueExpr:
-	case *ast.ArrayType:
-	case *ast.StructType:
-	case *ast.FuncType:
-	case *ast.InterfaceType:
-	case *ast.MapType:
-	case *ast.ChanType:
+	case *dst.IndexExpr:
+	case *dst.SliceExpr:
+	case *dst.TypeAssertExpr:
+	case *dst.CallExpr:
+	case *dst.StarExpr:
+	case *dst.UnaryExpr:
+	case *dst.BinaryExpr:
+	case *dst.KeyValueExpr:
+	case *dst.ArrayType:
+	case *dst.StructType:
+	case *dst.FuncType:
+	case *dst.InterfaceType:
+	case *dst.MapType:
+	case *dst.ChanType:
 	}
 	return nil
 }

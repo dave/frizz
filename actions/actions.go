@@ -1,12 +1,11 @@
 package actions
 
 import (
-	"go/ast"
-
+	"github.com/dave/dst"
+	"github.com/dave/dst/dstutil"
 	"github.com/dave/flux"
 	"github.com/dave/jsgo/server/frizz/gotypes"
 	"github.com/dave/services"
-	"golang.org/x/tools/go/ast/astutil"
 )
 
 type Load struct{}
@@ -38,10 +37,10 @@ type UserClickedNode struct {
 	Root gotypes.Object
 	Name string
 	Type gotypes.Type
-	Data ast.Expr
+	Data dst.Expr
 }
 
 type UserMutatedValue struct {
 	Root   gotypes.Object
-	Change astutil.ApplyFunc
+	Change dstutil.ApplyFunc
 }

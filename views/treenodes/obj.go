@@ -3,8 +3,7 @@ package treenodes
 import (
 	"fmt"
 
-	"go/ast"
-
+	"github.com/dave/dst"
 	"github.com/dave/frizz/actions"
 	"github.com/dave/frizz/stores"
 	"github.com/dave/jsgo/server/frizz/gotypes"
@@ -20,10 +19,10 @@ type Obj struct {
 	name       string         // name is just a title - e.g. "#1" for slice fields
 	root       gotypes.Object // the exported package-level object that the node is part of
 	typ        gotypes.Type
-	data       ast.Expr
+	data       dst.Expr
 }
 
-func NewObj(app *stores.App, path, file string, root gotypes.Object, name string, typ gotypes.Type, data ast.Expr) *Obj {
+func NewObj(app *stores.App, path, file string, root gotypes.Object, name string, typ gotypes.Type, data dst.Expr) *Obj {
 	return &Obj{
 		Node: &Node{
 			app: app,
@@ -45,7 +44,7 @@ func (v *Obj) Render() vecty.ComponentOrHTML {
 	children := childrenForNode(v.app, v.path, v.file, v.root, typ, v.data)
 
 	var data string
-	if bl, ok := v.data.(*ast.BasicLit); ok {
+	if bl, ok := v.data.(*dst.BasicLit); ok {
 		if len(bl.Value) > 10 {
 			data = ": " + bl.Value[:10]
 		} else {
@@ -74,11 +73,11 @@ func (v *Obj) Render() vecty.ComponentOrHTML {
 	).Build()
 }
 
-func childrenForNode(app *stores.App, path, file string, root gotypes.Object, typ gotypes.Type, data ast.Expr) []vecty.MarkupOrChild {
+func childrenForNode(app *stores.App, path, file string, root gotypes.Object, typ gotypes.Type, data dst.Expr) []vecty.MarkupOrChild {
 	type named struct {
 		name string
 		typ  gotypes.Type
-		data ast.Expr
+		data dst.Expr
 	}
 	var children []vecty.MarkupOrChild
 	var fields []named
@@ -89,22 +88,22 @@ func childrenForNode(app *stores.App, path, file string, root gotypes.Object, ty
 	case *gotypes.Slice, *gotypes.Array, *gotypes.Map:
 		elem := typ.(hasElem).Element()
 		switch data := data.(type) {
-		case *ast.CompositeLit:
+		case *dst.CompositeLit:
 			elType := app.Packages.ResolveType(elem, "", "", nil)
 			for key, el := range data.Elts {
 				switch el := el.(type) {
-				case *ast.KeyValueExpr:
+				case *dst.KeyValueExpr:
 					var name string
 					switch key := el.Key.(type) {
-					case *ast.Ident:
+					case *dst.Ident:
 						name = key.Name
-					case *ast.BasicLit:
+					case *dst.BasicLit:
 						name = key.Value
 					default:
 						panic(fmt.Sprintf("TODO: collection el key of type %T\n", el.Key))
 					}
 					fields = append(fields, named{name, elType, el.Value})
-				case *ast.CompositeLit:
+				case *dst.CompositeLit:
 					fields = append(fields, named{fmt.Sprint("#", key), elType, el})
 				default:
 					panic(fmt.Sprintf("TODO: collection el of type %T\n", el))
@@ -120,13 +119,13 @@ func childrenForNode(app *stores.App, path, file string, root gotypes.Object, ty
 			typeFields[field.Name] = field.Type
 		}
 		switch data := data.(type) {
-		case *ast.CompositeLit:
+		case *dst.CompositeLit:
 			for _, el := range data.Elts {
 				switch el := el.(type) {
-				case *ast.KeyValueExpr:
+				case *dst.KeyValueExpr:
 					var name string
 					switch key := el.Key.(type) {
-					case *ast.Ident:
+					case *dst.Ident:
 						name = key.Name
 					default:
 						panic(fmt.Sprintf("TODO: struct el key of type %T\n", el.Key))

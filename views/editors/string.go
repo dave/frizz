@@ -1,9 +1,11 @@
 package views
 
 import (
-	"go/ast"
+	"fmt"
 	"strconv"
 
+	"github.com/dave/dst"
+	"github.com/dave/dst/dstutil"
 	"github.com/dave/frizz/actions"
 	"github.com/dave/frizz/stores"
 	"github.com/dave/jsgo/server/frizz/gotypes"
@@ -11,17 +13,17 @@ import (
 	"github.com/gopherjs/vecty/elem"
 	"github.com/gopherjs/vecty/event"
 	"github.com/gopherjs/vecty/prop"
-	"golang.org/x/tools/go/ast/astutil"
 )
 
 type String struct {
 	vecty.Core
-	root gotypes.Object
-	app  *stores.App
-	Data ast.Expr `vecty:"prop"`
+	root  gotypes.Object
+	app   *stores.App
+	Data  dst.Expr `vecty:"prop"`
+	input *vecty.HTML
 }
 
-func NewString(app *stores.App, root gotypes.Object, data ast.Expr) *String {
+func NewString(app *stores.App, root gotypes.Object, data dst.Expr) *String {
 	v := &String{
 		app:  app,
 		root: root,
@@ -48,50 +50,52 @@ func (v *String) Render() vecty.ComponentOrHTML {
 
 	var value string
 	switch data := v.Data.(type) {
-	case *ast.BasicLit:
+	case *dst.BasicLit:
 		value, _ = strconv.Unquote(data.Value)
 	}
+
+	v.input = elem.Input(
+		vecty.Markup(
+			prop.Type(prop.TypeText),
+			vecty.Class("form-control"),
+			prop.Value(value),
+			event.KeyPress(func(ev *vecty.Event) {
+				if ev.Get("keyCode").Int() == 13 {
+					ev.Call("preventDefault")
+					v.save(ev)
+				}
+			}),
+		),
+	)
 
 	return elem.Form(
 		elem.Div(
 			vecty.Markup(
 				vecty.Class("form-group"),
 			),
-			/*
-				elem.Label(
-					vecty.Markup(
-						prop.For("foo"),
-					),
-					vecty.Text("Foo"),
-				),
-			*/
-			elem.Input(
-				vecty.Markup(
-					prop.Type(prop.TypeText),
-					vecty.Class("form-control"),
-					//prop.ID("foo"),
-					prop.Value(value),
-				),
-			),
+			v.input,
 		),
 		elem.Button(
 			vecty.Markup(
 				prop.Type(prop.TypeSubmit),
 				vecty.Class("btn", "btn-primary"),
-				event.Click(func(e *vecty.Event) {
-					v.app.Dispatch(&actions.UserMutatedValue{
-						Root: v.root,
-						Change: func(c *astutil.Cursor) bool {
-							if c.Node() != v.Data {
-								return true
-							}
-							c.Node().(*ast.BasicLit).Value = `"FOO"`
-							return true
-						},
-					})
-				}).PreventDefault(),
+				event.Click(v.save).PreventDefault(),
 			),
 			vecty.Text("Submit"),
 		),
 	)
+}
+
+func (v *String) save(*vecty.Event) {
+	value := v.input.Node().Get("value").String()
+	v.app.Dispatch(&actions.UserMutatedValue{
+		Root: v.root,
+		Change: func(c *dstutil.Cursor) bool {
+			if c.Node() != v.Data {
+				return true
+			}
+			c.Node().(*dst.BasicLit).Value = fmt.Sprintf("%q", value)
+			return true
+		},
+	})
 }
